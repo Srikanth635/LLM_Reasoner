@@ -1,28 +1,69 @@
+import json
 from typing import Annotated
 from typing_extensions import TypedDict, Sequence
 from langchain_core.messages import BaseMessage
+from langchain_core.messages.tool import ToolMessage
 from langgraph.graph.message import add_messages
-from langgraph.graph import StateGraph
+from langgraph.graph import StateGraph, END
 from langgraph.prebuilt import ToolNode, tools_condition
 
 class AgentState(TypedDict):
     """The state of the agent."""
-    messages: Annotated[Sequence[BaseMessage], add_messages]
+    messages: Annotated[list, add_messages]
+    # messages: Annotated[Sequence[BaseMessage], add_messages]
+
+class BasicToolNode:
+    def __init__(self, tools: list):
+        self.tools_by_name = {tool.name: tool for tool in tools}
+
+    def __call__(self, inputs: dict):
+        if messages := inputs.get("messages", []):
+            message = messages[-1]
+        else:
+            raise ValueError("No Message found in input")
+
+        outputs = []
+        for tool_call in message.tool_calls:
+            tool_result = self.tools_by_name[tool_call["name"]].invoke(tool_call["args"])
+            outputs.append(
+                ToolMessage(
+                    content=json.dumps(tool_result),
+                    name=tool_call["name"],
+                    tool_call_id=tool_call["id"],
+                )
+            )
+        return {"messages": outputs}
+
+# Routing Function
+def route_tools(state: dict):
+    if isinstance(state, list):
+        ai_message = state[-1]
+    elif messages := state.get("messages", []):
+        ai_message = messages[-1]
+    else:
+        raise ValueError(f"No messages found in input state to tool_edge: {state}")
+    if hasattr(ai_message, "tool_calls") and len(ai_message.tool_calls) > 0:
+        return "tools"
+    return END
 
 def create_agent(llm, tools):
+
     llm_with_tools = llm.bind_tools(tools)
+
+    # Agent Node
     def chatbot(state: AgentState):
         return {"messages": [llm_with_tools.invoke(state["messages"])]}
 
+    # Tool Node
+    tool_node = BasicToolNode(tools=tools)
+
     graph_builder = StateGraph(AgentState)
     graph_builder.add_node("agent", chatbot)
-
-    tool_node = ToolNode(tools=tools)
     graph_builder.add_node("tools", tool_node)
-
     graph_builder.add_conditional_edges(
         "agent",
-        tools_condition,
+        route_tools,
+        {"tools": "tools", END:END}
     )
     graph_builder.add_edge("tools", "agent")
     graph_builder.set_entry_point("agent")
