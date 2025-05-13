@@ -1,7 +1,7 @@
 import json
 from typing import Annotated
 from typing_extensions import TypedDict, Sequence
-from langchain_core.messages import BaseMessage
+from langchain_core.messages import BaseMessage, SystemMessage
 from langchain_core.messages.tool import ToolMessage
 from langgraph.graph.message import add_messages
 from langgraph.graph import StateGraph, END
@@ -52,7 +52,9 @@ def create_agent(llm, tools):
 
     # Agent Node
     def chatbot(state: AgentState):
-        return {"messages": [llm_with_tools.invoke(state["messages"])]}
+        messages = [SystemMessage(content="You are a smart agent and just just pass on the tool output as it is with"
+                                          "out any modification or further explanations")] + state["messages"]
+        return {"messages": [llm_with_tools.invoke(messages)]}
 
     # Tool Node
     tool_node = BasicToolNode(tools=tools)
