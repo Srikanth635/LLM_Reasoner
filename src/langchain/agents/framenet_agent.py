@@ -6,6 +6,7 @@ from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain_core.messages import HumanMessage
 from langchain_core.tools import tool
 from langchain_core.prompts import ChatPromptTemplate
+from langchain.agents import Tool
 
 from langgraph.graph import MessagesState
 from langgraph.types import Command
@@ -46,7 +47,7 @@ class FrameNetRepresentation(BaseModel):
 
 
 ###############################Structured Output FrameNet END#########################################################
-
+framenet_answers = []
 
 framenet_prompt_template = """
     You are an expert in Frame Semantics. For each instruction given, generate a FrameNet-style structured representation. Use a YAML-style output format (no curly braces), with abstract but context-relevant labels. Include peripheral elements when they apply.
@@ -151,7 +152,7 @@ Instruction: {input_instruction}
 framenet_prompt = ChatPromptTemplate.from_template(framenet_prompt_template)
 
 # llm_fn = ChatOpenAI(model="gpt-4o-mini")
-# structured_llm_fn = llm_fn.with_structured_output(FrameNetRepresentation)
+structured_llm_fn = llm.with_structured_output(FrameNetRepresentation)
 structured_ollama_llm_fn = ollama_llm.with_structured_output(FrameNetRepresentation, method="json_schema")
 
 # Agent Specific Tools
@@ -173,6 +174,7 @@ def framenet_tool(instruction: str):
     chain = framenet_prompt | structured_ollama_llm_fn
     response = chain.invoke({"input_instruction": instruction})
     json_response = response.model_dump_json(indent=2, by_alias=True)
+    framenet_answers.append(json_response)
     return json_response
 
 @tool
@@ -190,14 +192,21 @@ def frame_tool(instruction: str):
         str : frame name suitable for given input instruction.
     """
     print("INSIDE FRAME TOOL")
-    chain = framenet_prompt | structured_ollama_llm_fn
+    chain = framenet_prompt | structured_llm_fn
     response = chain.invoke({"input_instruction": instruction})
     json_response = response.model_dump_json(indent=2, by_alias=True)
     # return "Srikanth"
     return response
 
+framenet_tool_direct_return = Tool.from_function(
+    func=framenet_tool,
+    name= "framenet_tool",
+    description= "framenet representation of the input string with direct return tool output",
+    return_direct=True  # ✅ This ensures the agent returns it as-is
+)
+
 # Agent
-framenet_agent = create_agent(ollama_llm, [framenet_tool])
+framenet_agent = create_agent(llm, [framenet_tool_direct_return])
 
 
 # Agent as Node
@@ -220,5 +229,6 @@ if __name__ == "__main__":
     print("INSIDE MAIN")
 
     # test_framenet()
-    print(framenet_tool("pick up the bottle from the sink"))
+    # print(framenet_tool("pick up the bottle from the sink"))
     # print(fnr[0])
+    framenet_agent.invoke({'messages' : [HumanMessage(content='pick up the bottle from the sink')]})

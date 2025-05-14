@@ -1,11 +1,13 @@
 import json
 from typing import Annotated
 from typing_extensions import TypedDict, Sequence
-from langchain_core.messages import BaseMessage, SystemMessage
+from langchain_core.messages import BaseMessage, SystemMessage, HumanMessage
 from langchain_core.messages.tool import ToolMessage
 from langgraph.graph.message import add_messages
 from langgraph.graph import StateGraph, END
 from langgraph.prebuilt import ToolNode, tools_condition
+
+from src.langchain.llm_configuration import *
 
 class AgentState(TypedDict):
     """The state of the agent."""
@@ -48,13 +50,15 @@ def route_tools(state: dict):
 
 def create_agent(llm, tools):
 
+    llm_ollama = ollama_llm.bind_tools(tools)
     llm_with_tools = llm.bind_tools(tools)
 
     # Agent Node
     def chatbot(state: AgentState):
-        messages = [SystemMessage(content="You are a smart agent and just just pass on the tool output as it is with"
-                                          "out any modification or further explanations")] + state["messages"]
-        return {"messages": [llm_with_tools.invoke(messages)]}
+        messages = [SystemMessage(content="You are a smart agent and just pass on the tool output as it is with"
+                                          "out any modification or further explanations")] + state["messages"] + [HumanMessage(content=""
+                                           "/no_think")] #Dont add any additional explanation
+        return {"messages": [llm_ollama.invoke(messages)]}
 
     # Tool Node
     tool_node = BasicToolNode(tools=tools)

@@ -1,4 +1,5 @@
 from langgraph.graph import StateGraph, MessagesState, START
+from langgraph.checkpoint.memory import MemorySaver
 
 from src.langchain.agent_supervisor import supervisor_node
 from src.langchain.agents.framenet_agent import framenet_node
@@ -7,13 +8,15 @@ from src.langchain.agents.websearch_agent import web_research_node
 from dotenv import load_dotenv, find_dotenv
 load_dotenv(find_dotenv(), override=True)
 
+memory = MemorySaver()
+
 builder = StateGraph(MessagesState)
 builder.add_edge(START, "supervisor")
 builder.add_node("supervisor", supervisor_node)
 builder.add_node("mather", math_node)
 builder.add_node("web_researcher", web_research_node)
 builder.add_node("framenet", framenet_node)
-graph = builder.compile()
+graph = builder.compile(checkpointer=memory)
 
 
 if __name__ == "__main__":
