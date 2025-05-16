@@ -1,0 +1,358 @@
+{
+  "task": "PickAndPlaceAction",
+  "PreMotionPhase": {
+    "GoalDefinition": {
+      "task": "Pick and Place Block",
+      "semantic_annotation": "TaskClass:PickAndPlace",
+      "object": {
+        "id": "object_block_01",
+        "type": "Block",
+        "properties": {
+          "size": "small",
+          "texture": "rough"
+        },
+        "expected_end_state": {
+          "LocationState": {
+            "PlacedAtTarget": true
+          }
+        }
+      },
+      "tool": {
+        "id": "gripper_standard",
+        "type": "Gripper",
+        "properties": {
+          "grip_type": "parallel",
+          "max_force": 10
+        }
+      }
+    },
+    "PredictiveModel": {
+      "expected_trajectory": "Trajectory:PickToPlaceArc",
+      "expected_force": {
+        "initial_N": 2.0,
+        "resistance_range_N": [
+          1.0,
+          3.0
+        ]
+      },
+      "confidence_level": 0.98,
+      "affordance_model": {
+        "tool_affords_grasping": true,
+        "object_affords_being_grasped": true
+      }
+    },
+    "MotionPlanning": {
+      "planned_trajectory": "Trajectory:PickToPlaceLinearArc",
+      "obstacle_avoidance": "Basic",
+      "energy_efficiency": "Optimized"
+    }
+  },
+  "InitiationPhase": {
+    "InitialState": {
+      "robot_pose": {
+        "position": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "orientation": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "tool_position": [
+        0.4,
+        0.0,
+        0.2
+      ],
+      "target_object_position": [
+        0.5,
+        0.1,
+        0.0
+      ]
+    },
+    "MotionInitialization": {
+      "joint_activation": {
+        "joint1": 30,
+        "joint2": 45
+      },
+      "velocity_profile": "Profile:LinearRampUp",
+      "motion_priming": {
+        "pregrasp_pose_reached": true,
+        "tool_ready": true
+      }
+    },
+    "SubPhases": [
+      {
+        "name": "Reach",
+        "description": "Move end-effector toward the object",
+        "goalState": {
+          "ArmState": {
+            "Aligned": true
+          }
+        }
+      },
+      {
+        "name": "Grasp",
+        "description": "Engage object using gripper",
+        "goalState": {
+          "ObjectState": {
+            "Grasped": true
+          }
+        }
+      }
+    ],
+    "SymbolicGoals": {
+      "GripperStatus": {
+        "Engaged": true
+      },
+      "ObjectState": {
+        "Grasped": true
+      },
+      "ArmState": {
+        "Aligned": true
+      }
+    },
+    "SemanticAnnotation": "PhaseClass:Initiation"
+  },
+  "ExecutionPhase": {
+    "SubPhases": [
+      {
+        "name": "Lift",
+        "description": "Raise the object off the surface",
+        "goalState": {
+          "ObjectState": {
+            "Lifted": true
+          }
+        }
+      },
+      {
+        "name": "Transport",
+        "description": "Move object to placement location",
+        "goalState": {
+          "LocationState": {
+            "AtTarget": true
+          }
+        }
+      }
+    ],
+    "SymbolicGoals": {
+      "PositionState": {
+        "AtPlacementPose": true
+      }
+    },
+    "FeedforwardControl": {
+      "predicted_forces": {
+        "initial_force": 2.0,
+        "lifting_force_range": [
+          1.5,
+          3.5
+        ]
+      },
+      "predicted_positions": {
+        "start": [
+          0.5,
+          0.1,
+          0.0
+        ],
+        "end": [
+          0.8,
+          -0.2,
+          0.1
+        ]
+      },
+      "error_tolerance": {
+        "position_error": 0.01,
+        "force_error": 0.1
+      }
+    },
+    "FeedbackControl": {
+      "corrective_actions": {
+        "adjust_path": true,
+        "stabilize_object": true
+      },
+      "sensor_feedback": {
+        "grip_force": 4.8,
+        "position_error": 0.015,
+        "slip_detected": false
+      }
+    },
+    "SensoryIntegration": {
+      "tactile": {
+        "gripper_force": 4.8
+      },
+      "visual": {
+        "object_center": [
+          0.8,
+          -0.2,
+          0.1
+        ],
+        "gripper_position": [
+          0.8,
+          -0.2,
+          0.12
+        ]
+      },
+      "proprioceptive": {
+        "joint_positions": [
+          30,
+          45
+        ],
+        "joint_velocities": [
+          0.3,
+          0.2
+        ]
+      }
+    },
+    "SemanticAnnotation": "PhaseClass:Execution"
+  },
+  "InteractionPhase": {
+    "SubPhases": [
+      {
+        "name": "Place",
+        "description": "Lower object to target surface",
+        "goalState": {
+          "ObjectState": {
+            "Placed": true
+          }
+        }
+      },
+      {
+        "name": "Stabilize",
+        "description": "Ensure object is stable before release",
+        "goalState": {
+          "ObjectState": {
+            "Stable": true
+          }
+        }
+      }
+    ],
+    "SymbolicGoals": {
+      "TaskStatus": {
+        "Placing": true
+      }
+    },
+    "ForceAdaptation": {
+      "grip_force": {
+        "initial_grip": 4.8,
+        "adjusted_grip": 4.5
+      }
+    },
+    "ObjectModeling": {
+      "placement_surface": {
+        "type": "Flat",
+        "friction_coefficient": 0.5
+      }
+    },
+    "SemanticAnnotation": "PhaseClass:Interaction"
+  },
+  "TerminationPhase": {
+    "SubPhases": [
+      {
+        "name": "Release",
+        "description": "Open gripper to release object",
+        "goalState": {
+          "GripperStatus": {
+            "Released": true
+          }
+        }
+      },
+      {
+        "name": "Retract",
+        "description": "Move hand away from object",
+        "goalState": {
+          "ArmState": {
+            "Retracted": true
+          }
+        }
+      }
+    ],
+    "SymbolicGoals": {
+      "ObjectState": {
+        "Placed": true
+      },
+      "GripperStatus": {
+        "Released": true
+      }
+    },
+    "EndEffectorStabilization": {
+      "final_position": {
+        "gripper_position": [
+          0.8,
+          -0.2,
+          0.3
+        ]
+      },
+      "reset_trajectory": "Trajectory:RetractToHome"
+    },
+    "SuccessVerification": {
+      "outcome_check": {
+        "object_placed": true,
+        "stable_on_surface": true
+      },
+      "error_analysis": {
+        "placement_accuracy": 0.01,
+        "orientation_error": 0.02
+      }
+    },
+    "SemanticAnnotation": "PhaseClass:Termination"
+  },
+  "PostMotionPhase": {
+    "SubPhases": [
+      {
+        "name": "UpdateStatus",
+        "description": "Record placement and update world model",
+        "goalState": {
+          "KnowledgeBase": {
+            "Updated": true
+          }
+        }
+      },
+      {
+        "name": "PrepareNextTask",
+        "description": "Reset system for next task",
+        "goalState": {
+          "SystemState": {
+            "Initialized": true
+          }
+        }
+      }
+    ],
+    "SymbolicGoals": {
+      "SystemState": {
+        "Ready": true
+      }
+    },
+    "LearningUpdate": {
+      "model_refinement": {
+        "force_model_update": {
+          "grip_force": 4.5
+        },
+        "trajectory_model_update": {
+          "placement_accuracy_correction": 0.01
+        }
+      },
+      "reinforcement": {
+        "successful_placement": true,
+        "reinforce_parameters": {
+          "grip_force": 4.5
+        }
+      }
+    },
+    "ErrorCorrection": {
+      "deviation_analysis": {
+        "position_error": 0.015,
+        "slip_event": false
+      },
+      "parameter_update": {
+        "grip_force_range": [
+          4.3,
+          4.7
+        ]
+      }
+    },
+    "SemanticAnnotation": "PhaseClass:PostMotion"
+  }
+}

@@ -147,7 +147,7 @@ framenet_prompt_template = """
     
     Now, given the instruction below, produce a similar output:
     
-Instruction: {input_instruction}
+    Instruction: {input_instruction}
 """
 framenet_prompt = ChatPromptTemplate.from_template(framenet_prompt_template)
 
@@ -206,7 +206,7 @@ framenet_tool_direct_return = Tool.from_function(
 )
 
 # Agent
-framenet_agent = create_agent(llm, [framenet_tool_direct_return])
+framenet_agent = create_agent(ollama_llm, [framenet_tool_direct_return])
 
 
 # Agent as Node

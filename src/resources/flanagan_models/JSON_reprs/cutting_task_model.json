@@ -1,0 +1,376 @@
+{
+  "task": "CuttingAction",
+  "PreMotionPhase": {
+    "GoalDefinition": {
+      "task": "Cut Apple",
+      "semantic_annotation": "TaskClass:Cutting",
+      "object": {
+        "id": "object_apple_01",
+        "type": "Fruit",
+        "properties": {
+          "size": "medium",
+          "texture": "smooth"
+        },
+        "expected_end_state": {
+          "ObjectState": {
+            "SlicedInHalf": true
+          }
+        }
+      },
+      "tool": {
+        "id": "knife_standard_15cm",
+        "type": "Knife",
+        "properties": {
+          "sharpness": "high",
+          "length_cm": 15
+        }
+      }
+    },
+    "PredictiveModel": {
+      "expected_trajectory": "Trajectory:SmoothDownwardCut",
+      "expected_force": {
+        "initial_N": 2.0,
+        "resistance_range_N": [
+          1.5,
+          3.0
+        ]
+      },
+      "confidence_level": 0.95,
+      "affordance_model": {
+        "tool_affords_cutting": true,
+        "object_affords_slicing": true
+      }
+    },
+    "MotionPlanning": {
+      "planned_trajectory": "Trajectory:LinearCutDownward",
+      "obstacle_avoidance": "None",
+      "energy_efficiency": "Optimized"
+    }
+  },
+  "InitiationPhase": {
+    "InitialState": {
+      "robot_pose": {
+        "position": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "orientation": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "tool_position": [
+        0.5,
+        -0.2,
+        0.3
+      ],
+      "target_object_position": [
+        0.5,
+        0.0,
+        0.1
+      ]
+    },
+    "MotionInitialization": {
+      "joint_activation": {
+        "joint1": 45,
+        "joint2": 30
+      },
+      "velocity_profile": "Profile:LinearRampUp",
+      "motion_priming": {
+        "pregrasp_pose_reached": true,
+        "tool_ready": true
+      }
+    },
+    "SubPhases": [
+      {
+        "name": "ReachTool",
+        "description": "Move toward the cutting tool",
+        "goalState": {
+          "ArmState": {
+            "Aligned": true
+          }
+        }
+      },
+      {
+        "name": "GraspTool",
+        "description": "Grasp the cutting tool",
+        "goalState": {
+          "ToolState": {
+            "Grasped": true
+          }
+        }
+      }
+    ],
+    "SymbolicGoals": {
+      "ToolState": {
+        "Grasped": true
+      },
+      "ArmState": {
+        "Aligned": true
+      }
+    },
+    "SemanticAnnotation": "PhaseClass:Initiation"
+  },
+  "ExecutionPhase": {
+    "SubPhases": [
+      {
+        "name": "AlignToolWithTarget",
+        "description": "Align tool with cut start location and orientation",
+        "goalState": {
+          "ToolState": {
+            "Aligned": true
+          }
+        }
+      },
+      {
+        "name": "ApproachTarget",
+        "description": "Move tool into initial contact with object",
+        "goalState": {
+          "ToolState": {
+            "Engaged": true
+          },
+          "TargetObjectState": {
+            "Contacted": true
+          }
+        }
+      }
+    ],
+    "SymbolicGoals": {
+      "ToolState": {
+        "ReadyForCut": true
+      },
+      "TargetObjectState": {
+        "PreparedForCut": true
+      }
+    },
+    "FeedforwardControl": {
+      "predicted_forces": {
+        "initial_force": 2.0,
+        "cutting_force_range": [
+          1.5,
+          3.0
+        ]
+      },
+      "predicted_positions": {
+        "start": [
+          0.5,
+          -0.2,
+          0.3
+        ],
+        "end": [
+          0.5,
+          -0.2,
+          0.1
+        ]
+      },
+      "error_tolerance": {
+        "position_error": 0.01,
+        "force_error": 0.1
+      }
+    },
+    "FeedbackControl": {
+      "corrective_actions": {
+        "adjust_trajectory": true,
+        "increase_force": true
+      },
+      "sensor_feedback": {
+        "force": 2.3,
+        "position_error": 0.02,
+        "slip_detected": false
+      }
+    },
+    "SensoryIntegration": {
+      "tactile": {
+        "gripper_force": 5.0,
+        "cutting_force": 2.3
+      },
+      "visual": {
+        "object_center": [
+          0.5,
+          0.2,
+          0.1
+        ],
+        "knife_position": [
+          0.5,
+          -0.2,
+          0.28
+        ]
+      },
+      "proprioceptive": {
+        "joint_positions": [
+          45,
+          30
+        ],
+        "joint_velocities": [
+          0.2,
+          0.1
+        ]
+      }
+    },
+    "SemanticAnnotation": "PhaseClass:Execution"
+  },
+  "InteractionPhase": {
+    "SubPhases": [
+      {
+        "name": "Cut",
+        "description": "Move tool along predefined cutting path",
+        "goalState": {
+          "MaterialState": {
+            "BeingCut": true
+          }
+        }
+      },
+      {
+        "name": "MonitorAndControl",
+        "description": "Adjust tool motion and force as needed",
+        "goalState": {
+          "ControlState": {
+            "Stable": true
+          }
+        }
+      }
+    ],
+    "SymbolicGoals": {
+      "TaskStatus": {
+        "Cutting": true
+      }
+    },
+    "ForceAdaptation": {
+      "grip_force": {
+        "initial_grip": 4.5,
+        "adjusted_grip": 5.0
+      },
+      "cutting_force": {
+        "initial_cut": 2.0,
+        "adaptive_cut": 2.3
+      }
+    },
+    "ObjectModeling": {
+      "deformation_model": {
+        "elasticity": 0.3,
+        "strain_limit": 0.5,
+        "current_deformation": 0.4
+      },
+      "material_properties": {
+        "hardness": 1.0,
+        "friction_coefficient": 0.4
+      }
+    },
+    "SemanticAnnotation": "PhaseClass:Interaction"
+  },
+  "TerminationPhase": {
+    "SubPhases": [
+      {
+        "name": "WithdrawTool",
+        "description": "Lift tool from object",
+        "goalState": {
+          "ToolState": {
+            "Lifted": true
+          }
+        }
+      },
+      {
+        "name": "ReleaseTool",
+        "description": "Put down or release tool",
+        "goalState": {
+          "ToolState": {
+            "Released": true
+          }
+        }
+      }
+    ],
+    "SymbolicGoals": {
+      "TargetObjectState": {
+        "Separated": true
+      },
+      "ToolState": {
+        "Released": true
+      }
+    },
+    "EndEffectorStabilization": {
+      "final_position": {
+        "knife_position": [
+          0.5,
+          -0.2,
+          0.0
+        ]
+      },
+      "reset_trajectory": "Trajectory:LinearResetToNeutral"
+    },
+    "SuccessVerification": {
+      "outcome_check": {
+        "apple_cut": true,
+        "halves_separated": true
+      },
+      "error_analysis": {
+        "cut_quality": "CutQuality:Smooth",
+        "deviation_from_center": 0.02
+      }
+    },
+    "SemanticAnnotation": "PhaseClass:Termination"
+  },
+  "PostMotionPhase": {
+    "SubPhases": [
+      {
+        "name": "UpdateStatus",
+        "description": "Record cut outcome and update world model",
+        "goalState": {
+          "KnowledgeBase": {
+            "Updated": true
+          }
+        }
+      },
+      {
+        "name": "PrepareNextTask",
+        "description": "Reset system for next task",
+        "goalState": {
+          "SystemState": {
+            "Initialized": true
+          }
+        }
+      }
+    ],
+    "SymbolicGoals": {
+      "SystemState": {
+        "Ready": true
+      }
+    },
+    "LearningUpdate": {
+      "model_refinement": {
+        "force_model_update": {
+          "cutting_force": 2.5
+        },
+        "trajectory_model_update": {
+          "deviation_correction": 0.01
+        }
+      },
+      "reinforcement": {
+        "successful_cut": true,
+        "reinforce_parameters": {
+          "grip_force": 5.0
+        }
+      }
+    },
+    "ErrorCorrection": {
+      "deviation_analysis": {
+        "position_error": 0.02,
+        "force_error": 0.1,
+        "slip_event": false
+      },
+      "parameter_update": {
+        "cutting_force_range": [
+          1.6,
+          2.8
+        ],
+        "grip_force_range": [
+          4.8,
+          5.2
+        ]
+      }
+    },
+    "SemanticAnnotation": "PhaseClass:PostMotion"
+  }
+}

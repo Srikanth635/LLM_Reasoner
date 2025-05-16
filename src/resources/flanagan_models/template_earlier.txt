@@ -1,0 +1,980 @@
+examples = [
+#     {"input": "Pour water from the bottle into the container.",
+#      "output": """
+#         {
+#           "task": "Pour water from the bottle into the container.",
+#           "action": {
+#               "type": "Pouring"
+#             },
+#
+#           "object": {
+#               "type": "PhysicalArtifact",
+#               "name": "WaterBottle",
+#               "properties": {
+#                 "material": "plastic",
+#                 "color": "clear",
+#                 "size": "medium",
+#                 "shape": "cylindrical",
+#                 "weight": "light",
+#                 "transparency": "transparent",
+#                 "texture": "smooth",
+#                 "pattern": "solid",
+#                 "reflectance": "glossy",
+#                 "symmetry": "radial",
+#                 "volume": "high",
+#                 "density": "lowdensity",
+#                 "length": "medium",
+#                 "width": "narrow",
+#                 "height": "tall",
+#                 "firmness": "firm",
+#                 "grip": "textured",
+#                 "balance": "balanced",
+#                 "handle": "none",
+#                 "blade": "none",
+#                 "edge": "none",
+#                 "point": "none",
+#                 "corners": "rounded",
+#                 "skin": "none",
+#                 "cleanliness": "clean",
+#                 "condition": "intact",
+#                 "intactness": "intact",
+#                 "freshness": "none",
+#                 "ripeness": "none",
+#                 "dirt": "none",
+#                 "count": "single",
+#                 "orientation": "upright",
+#                 "position": "on",
+#                 "odor": "none"
+#               }
+#             },
+#
+#           "target": {
+#               "type": "PhysicalArtifact",
+#               "name": "Container",
+#               "properties": {
+#                 "material": "glass",
+#                 "color": "clear",
+#                 "size": "medium",
+#                 "shape": "rectangular",
+#                 "weight": "medium",
+#                 "transparency": "transparent",
+#                 "texture": "smooth",
+#                 "pattern": "solid",
+#                 "reflectance": "glossy",
+#                 "symmetry": "bilateral",
+#                 "volume": "medium",
+#                 "density": "mediumdensity",
+#                 "length": "medium",
+#                 "width": "wide",
+#                 "height": "medium",
+#                 "firmness": "rigid",
+#                 "grip": "smooth",
+#                 "balance": "balanced",
+#                 "handle": "present",
+#                 "blade": "none",
+#                 "edge": "rounded",
+#                 "point": "none",
+#                 "corners": "rounded",
+#                 "skin": "none",
+#                 "cleanliness": "clean",
+#                 "condition": "intact",
+#                 "intactness": "intact",
+#                 "freshness": "none",
+#                 "ripeness": "none",
+#                 "dirt": "none",
+#                 "count": "single",
+#                 "orientation": "upright",
+#                 "position": "on",
+#                 "odor": "none"
+#               }
+#             },
+#
+#
+#           "tool": {
+#               "type": "Gripper",
+#               "name": "RobotGripper",
+#               "properties": {
+#                 "type": "parallel-jaw",
+#                 "fingers": "two",
+#                 "material": "rubberized",
+#                 "capability": "grasping",
+#                 "state": "closed"
+#               }
+#             },
+#
+#           "location": {
+#               "type": "PhysicalPlace",
+#               "name": "Countertop",
+#               "properties": {
+#                 "type": "surface",
+#                 "material": "granite",
+#                 "position": "center",
+#                 "cleanliness": "clean"
+#               }
+#             },
+#
+#           "flanagan_phases" : {
+#             "PreMotionPhase": {
+#               "GoalDefinition": {
+#                 "task": "Pour Water",
+#                 "semantic_annotation": "TaskClass:Pouring",
+#                 "object": {
+#                   "id": "bottle_01",
+#                   "type": "PhysicalArtifact",
+#                   "properties": {
+#                     "contents": "water",
+#                     "fill_level": "full",
+#                     "material": "plastic"
+#                   },
+#                   "expected_end_state": {
+#                     "ObjectState": { "EmptiedIntoTarget": true }
+#                   }
+#                 },
+#                 "target": {
+#                   "id": "container_01",
+#                   "type": "PhysicalArtifact",
+#                   "properties": {
+#                     "capacity_ml": 500,
+#                     "initial_contents": "empty"
+#                   }
+#                 },
+#                 "tool": {
+#                   "id": "gripper_standard",
+#                   "type": "Gripper",
+#                   "properties": {
+#                     "grip_type": "cylindrical",
+#                     "max_force": 8
+#                   }
+#                 }
+#               },
+#               "PredictiveModel": {
+#                 "expected_trajectory": "Trajectory:TiltArcToContainer",
+#                 "expected_force": {
+#                   "initial_N": 1.0,
+#                   "resistance_range_N": [0.8, 1.5]
+#                 },
+#                 "confidence_level": 0.96,
+#                 "affordance_model": {
+#                   "tool_affords_holding": true,
+#                   "object_affords_pouring": true
+#                 }
+#               },
+#               "MotionPlanning": {
+#                 "planned_trajectory": "Trajectory:TiltPourArc",
+#                 "obstacle_avoidance": "Basic",
+#                 "energy_efficiency": "Optimized"
+#               }
+#             },
+#             "InitiationPhase": {
+#               "InitialState": {
+#                 "robot_pose": {
+#                   "position": [0.0, 0.0, 0.0],
+#                   "orientation": [0.0, 0.0, 0.0, 1.0]
+#                 },
+#                 "tool_position": [0.3, 0.0, 0.2],
+#                 "target_object_position": [0.4, 0.1, 0.0]
+#               },
+#               "MotionInitialization": {
+#                 "joint_activation": {
+#                   "joint1": 25,
+#                   "joint2": 35
+#                 },
+#                 "velocity_profile": "Profile:LinearRampUp",
+#                 "motion_priming": {
+#                   "pregrasp_pose_reached": true,
+#                   "tool_ready": true
+#                 }
+#               },
+#               "SubPhases": [
+#                 {
+#                   "name": "Reaching",
+#                   "description": "Move end-effector toward the bottle",
+#                   "goalState": { "ArmState": { "Aligned": true } }
+#                 },
+#                 {
+#                   "name": "Grasping",
+#                   "description": "Grasp the bottle using gripper",
+#                   "goalState": { "ToolState": { "Grasped": true } }
+#                 }
+#               ],
+#               "SymbolicGoals": {
+#                 "GripperStatus": { "Engaged": true },
+#                 "ToolState": { "Grasped": true },
+#                 "ArmState": { "Aligned": true }
+#               },
+#               "SemanticAnnotation": "PhaseClass:Initiation"
+#             },
+#             "ExecutionPhase": {
+#               "SubPhases": [
+#                 {
+#                   "name": "AlignToolWithTarget",
+#                   "description": "Align bottle above the container",
+#                   "goalState": { "ToolState": { "Aligned": true } }
+#                 },
+#                 {
+#                   "name": "Approaching",
+#                   "description": "Move bottle into pouring position",
+#                   "goalState": {
+#                     "ToolState": { "Engaged": true },
+#                     "TargetObjectState": { "Contacted": true }
+#                   }
+#                 }
+#               ],
+#               "SymbolicGoals": {
+#                 "ToolState": { "ReadyForPour": true },
+#                 "TargetObjectState": { "PreparedToReceive": true }
+#               },
+#               "FeedforwardControl": {
+#                 "predicted_forces": {
+#                   "initial_force": 1.0,
+#                   "tilt_force_range": [0.8, 1.5]
+#                 },
+#                 "predicted_positions": {
+#                   "start": [0.4, 0.1, 0.2],
+#                   "end": [0.4, 0.1, 0.15]
+#                 },
+#                 "error_tolerance": {
+#                   "position_error": 0.005,
+#                   "force_error": 0.05
+#                 }
+#               },
+#               "FeedbackControl": {
+#                 "corrective_actions": {
+#                   "adjust_tilt": true,
+#                   "stabilize_container": true
+#                 },
+#                 "sensor_feedback": {
+#                   "tilt_angle": 45,
+#                   "flow_started": true
+#                 }
+#               },
+#               "SensoryIntegration": {
+#                 "tactile": {
+#                   "gripper_force": 5.0
+#                 },
+#                 "visual": {
+#                   "liquid_stream_detected": true,
+#                   "container_position": [0.4, 0.1, 0.15]
+#                 },
+#                 "proprioceptive": {
+#                   "joint_positions": [25, 35],
+#                   "joint_velocities": [0.2, 0.15]
+#                 }
+#               },
+#               "SemanticAnnotation": "PhaseClass:Execution"
+#             },
+#             "InteractionPhase": {
+#               "SubPhases": [
+#                 {
+#                   "name": "Pouring",
+#                   "description": "Tilt bottle to pour water",
+#                   "goalState": { "FlowState": { "Initiated": true } }
+#                 },
+#                 {
+#                   "name": "MonitorAndControl (or) MonitoringJointState",
+#                   "description": "Adjust tilt and monitor flow",
+#                   "goalState": { "ControlState": { "Stable": true } }
+#                 },
+#                 {
+#                   "name": "StopPour (or) Orienting",
+#                   "description": "Return bottle to upright",
+#                   "goalState": { "FlowState": { "Stopped": true } }
+#                 }
+#               ],
+#               "SymbolicGoals": {
+#                 "TaskStatus": { "Pouring": true }
+#               },
+#               "ForceAdaptation": {
+#                 "grip_force": {
+#                   "initial_grip": 4.0,
+#                   "adjusted_grip": 4.5
+#                 },
+#                 "tilt_force": {
+#                   "initial_tilt": 1.0,
+#                   "adaptive_tilt": 1.3
+#                 }
+#               },
+#               "ObjectModeling": {
+#                 "liquid_properties": {
+#                   "viscosity": 0.001,
+#                   "flow_rate": 0.2
+#                 }
+#               },
+#               "SemanticAnnotation": "PhaseClass:Interaction"
+#             },
+#             "TerminationPhase": {
+#               "SubPhases": [
+#                 {
+#                   "name": "Orienting",
+#                   "description": "Return bottle to upright position",
+#                   "goalState": { "OrientationState": { "Upright": true } }
+#                 },
+#                 {
+#                   "name": "Placing (and) Releasing",
+#                   "description": "Place bottle back and release grip",
+#                   "goalState": { "GripperStatus": { "Released": true } }
+#                 }
+#               ],
+#               "SymbolicGoals": {
+#                 "ObjectState": { "Placed": true },
+#                 "GripperStatus": { "Released": true }
+#               },
+#               "EndEffectorStabilization": {
+#                 "final_position": {
+#                   "gripper_position": [0.3, 0.0, 0.3]
+#                 },
+#                 "reset_trajectory": "Trajectory:RetractToStandby"
+#               },
+#               "SuccessVerification": {
+#                 "outcome_check": {
+#                   "liquid_transferred": true,
+#                   "no_spillage": true
+#                 },
+#                 "error_analysis": {
+#                   "pour_accuracy": 0.02
+#                 }
+#               },
+#               "SemanticAnnotation": "PhaseClass:Termination"
+#             },
+#             "PostMotionPhase": {
+#               "SubPhases": [
+#                 {
+#                   "name": "UpdateStatus",
+#                   "description": "Record task completion and update world model",
+#                   "goalState": { "KnowledgeBase": { "Updated": true } }
+#                 },
+#                 {
+#                   "name": "PrepareNextTask",
+#                   "description": "Reset for next operation",
+#                   "goalState": { "SystemState": { "Initialized": true } }
+#                 }
+#               ],
+#               "SymbolicGoals": {
+#                 "SystemState": { "Ready": true }
+#               },
+#               "LearningUpdate": {
+#                 "model_refinement": {
+#                   "force_model_update": {
+#                     "tilt_force": 1.3
+#                   },
+#                   "trajectory_model_update": {
+#                     "pour_offset_correction": 0.01
+#                   }
+#                 },
+#                 "reinforcement": {
+#                   "successful_pour": true,
+#                   "reinforce_parameters": {
+#                     "grip_force": 4.5
+#                   }
+#                 }
+#               },
+#               "ErrorCorrection": {
+#                 "deviation_analysis": {
+#                   "pouring_offset": 0.015,
+#                   "slip_event": false
+#                 },
+#                 "parameter_update": {
+#                   "tilt_force_range": [1.1, 1.5],
+#                   "grip_force_range": [4.3, 4.7]
+#                 }
+#               },
+#               "SemanticAnnotation": "PhaseClass:PostMotion"
+#             }
+#           },
+#
+#           "framenet" : {
+#             "framenet": "pouring",
+#             "frame": "Pouring",
+#             "lexical-unit": "pour.v",
+#             "core": {
+#                 "agent": "robot",
+#                 "theme_patient": "water",
+#                 "instrument": "bottle",
+#                 "source": "bottle",
+#                 "goal": "container",
+#                 "result": "container has water"
+#                 },
+#             "peripheral": {
+#               "location": "kitchen workspace",
+#               "manner": "gently",
+#               "direction": "downward",
+#               "time": "during preparation",
+#               "quantity": "one container",
+#               "portion": "full"
+#               }
+#           }
+#         }
+#
+#      """}
+# ]
+#
+# example_prompt = ChatPromptTemplate.from_messages(
+#     [
+#         ("human", "{input}"),
+#         ("ai","{output}")
+#     ]
+# )
+
+
+
+flanagan_few_shot_template = FewShotChatMessagePromptTemplate(
+    example_prompt=example_prompt,
+    examples=examples,
+)
+
+flanagan_prompt = ChatPromptTemplate.from_messages(
+    [
+        ("system", """
+            You are an expert AI in robotics task planning and semantic task representation.
+            Your goal is to meticulously translate a natural language instruction into a detailed JSON object.
+            This JSON object must strictly conform to a predefined Pydantic schema representing a complete robotic task (TaskModel).
+            The overall structure is a `TaskModel` which includes several phases: `
+            PreMotionPhase`, `InitiationPhase`, `ExecutionPhase`, `InteractionPhase`, `TerminationPhase`, and `PostMotionPhase`.
+            Each phase can contain `SubPhases` and `SymbolicGoals`.
+            The `PreMotionPhase` is crucial as it defines the overall `GoalDefinition` including the primary `object`, `target` (if any), and `tool`.
+
+            **Key Instructions for JSON Generation:
+
+            ** 1. **Output Format:**
+                Generate a single, valid JSON object. Do NOT use YAML or any other format. Do not include any explanatory text outside the JSON structure.
+
+             2. **Schema Adherence:**
+                Strictly follow the field names, data types (string, float, boolean, list, dict), and nesting as defined by the Pydantic models.
+                 * `ObjectModel` should have `id`, `type`, `properties` (like `size`, `material`, `hardness`), and `expected_end_state`.
+                 * `ToolModel` should have `id`, `type`, and `properties` (like `grip_force`, `sharpness`).
+                 * `GoalState` defines symbolic conditions, e.g., `<<<<"ObjectState": <<<<"<object_id>.IsHeld": True>>>>, "ToolState": <<<<"<tool_id>.Holding": "<object_id>">>>>>>>>`.
+                 * `SubPhase` includes `name`, `description`, and its specific `goalState`.
+
+             3. **ID Generation:**
+                For `id` fields in `ObjectModel` and `ToolModel`, generate descriptive lowercase IDs (e.g., "bottle1", "knife_main", "table_surface").
+
+             4. **Inference and Defaults:**
+                 * If the instruction lacks specific details for certain fields (e.g., object properties, tool properties, precise force values, robot poses),
+                    infer reasonable, common-sense values or use placeholders like "to_be_defined", "generic_material", or `null` for optional fields.
+
+                 * For physical properties like `hardness`, `friction_coefficient`, provide estimated float values if the object type is known (e.g., an apple is soft, a metal block is hard).
+                     If unknown, use `null`. * `PredictiveModel`, `MotionPlanning`, `InitialState`, `MotionInitialization` often require assumed values.
+                     Use typical robotic defaults (e.g., `expected_trajectory`: "StandardApproachPath", `obstacle_avoidance`: "ReactiveSensorBased", `robot_pose`: `[0.0, 0.0, 0.0, 0.0, 0.0, 0.0]`).
+
+             5. **Phase and SubPhase Breakdown:**
+                * Infer a logical sequence of main phases based on the instruction. * Within `InitiationPhase`, `ExecutionPhase`, `InteractionPhase`, and `TerminationPhase`,
+                    break down the action into a series of `SubPhase` objects. For example, "picking up" might involve "ReachToPreGrasp", "ApproachObject", "Grasp", "Lift".
+                    Each `SubPhase` needs a `name`, `description`, and its `goalState`.
+
+             6. **Semantic Annotations:**
+                Use ontology-style labels for `semantic_annotation` fields
+                (e.g., `GoalDefinition.semantic_annotation`: "TaskClass:Manipulation.Take", `Phase.SemanticAnnotation`: "PhaseClass:Motion.Initiation").
+
+             7. **Empty/Optional Fields:**
+                If an optional field is not applicable or information is missing, use `null` (for JSON). For optional complex objects (like `target` in `GoalDefinition`),
+                omit them or set to `null` if not present. 8. **Task Label:** The top-level `TaskModel.task` should be a `PascalCase` summary of the instruction (e.g., "PickUpBottleFromSink").
+
+
+             **Pydantic Schema Snippets (for context - your output must be full JSON for TaskModel):**
+                 * `TaskModel`: `<<<<"task": "...", "PreMotionPhase": <<<...>>>, "InitiationPhase": <<<...>>>, ...>>>>`
+                 * `FullPhase` (for PreMotion): `<<<<"goal_definition": <<<...>>>, "predictive_model": <<<...>>>, "motion_planning": <<<...>>>>>>`
+                 * `GoalDefinition`: `<<<<"task": "...", "semantic_annotation": "...", "object": <<<...>>>, "target": <<<...>>>, "tool": <<<...>>>>>>`
+                 * `ObjectModel`: `<<<<"id": "obj1", "type": "bottle", "properties": <<<<size": "medium">>>>, "expected_end_state": <<<...>>>>>>`
+                 * `SubPhase`: `<<<<"name": "Grasp", "description": "Secure the object.", "goalState": <<<<"conditions": <<<<"ToolState": <<<<"IsHolding": True, "TargetObject": "obj1">>>>>>>>>>>>>>`
+                 * `GoalState`: `<<<<"conditions": <<<<"SomeCategory": <<<<"SomeCondition": True>>>>>>>>>>>>`
+            """),
+        flanagan_few_shot_template,
+        ("human", "{input}")
+    ]
+)
+
+
+
+
+##### Full template flanagan
+
+flanagan_prompt_template = """
+
+    You are an expert AI in robotics task planning and semantic task representation. For each instruction given, generate a Flanagan-like JSON representation.
+    This JSON object must strictly conform to a predefined Pydantic schema representing a complete robotic task (TaskModel).
+
+    The overall structure is a `TaskModel` which includes several phases: `PreMotionPhase`, `InitiationPhase`, `ExecutionPhase`, `InteractionPhase`, `TerminationPhase`, and `PostMotionPhase`.
+    Each phase can contain `SubPhases` and `SymbolicGoals`. The `PreMotionPhase` is crucial as it defines the overall `GoalDefinition` including the primary `object`, `target` (if any), and `tool`.
+
+    **Key Instructions for JSON Generation:**
+
+    **Output Format**
+        Generate a single valid JSON object.
+        Do not use YAML or any other format.
+        Do not include any explanatory text outside the JSON structure.
+    **Schema Adherence**
+        ObjectModel must contain:
+            id
+            type
+            properties (e.g., size, material, hardness)
+            expected_end_state
+        ToolModel must contain:
+            id
+            type
+            properties (e.g., grip_force, sharpness)
+        GoalState defines symbolic conditions such as:
+            ObjectState: <object_id>.IsHeld = True
+            ToolState: <tool_id>.Holding = <object_id>
+        SubPhase includes:
+            name
+            description
+            goalState
+    **ID Generation**
+        Use descriptive lowercase IDs for id fields in ObjectModel and ToolModel:
+            Example: "bottle1", "knife_main", "table_surface"
+    **Inference and Defaults**
+        If instruction lacks specific details:
+            Infer reasonable values or use placeholders like:
+                "to_be_defined"
+                "generic_material"
+                null for optional fields
+        For physical properties:
+            Estimate float values if known (e.g., apple = soft ~0.3, metal block = hard ~0.9)
+            Use null if unknown
+        For PredictiveModel, MotionPlanning, InitialState, MotionInitialization:
+            Use typical robotic defaults:
+                expected_trajectory: "StandardApproachPath"
+                obstacle_avoidance: "ReactiveSensorBased"
+                robot_pose: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    **Phase and SubPhase Breakdown**
+        Infer logical sequence of main phases based on instruction.
+        Break down each phase into SubPhase objects:
+            InitiationPhase
+            ExecutionPhase
+            InteractionPhase
+            TerminationPhase
+        Each SubPhase should have:
+            name
+            description
+            goalState
+        Example for "picking up":
+            ReachToPreGrasp
+            ApproachObject
+            Grasp
+            Lift
+    **Semantic Annotations**
+        Use ontology-style labels:
+            GoalDefinition.semantic_annotation: "TaskClass:Manipulation.Take"
+            Phase.SemanticAnnotation: "PhaseClass:Motion.Initiation"
+    **Empty/Optional Fields**
+        If a field is optional and not applicable:
+            Use null (for JSON)
+        For optional complex objects (like target in GoalDefinition):
+            Omit them or set to null if not present
+    **Task Label**
+        Top-level TaskModel.task should be PascalCase summary:
+            Example: "PickUpBottleFromSink"
+
+    ---
+
+    Example 1:
+
+    {{
+      "task": "Pour water from the bottle into the container.",
+      "action": {{
+          "type": "Pouring"
+        }},
+
+      "object": {{
+          "type": "PhysicalArtifact",
+          "name": "WaterBottle",
+          "properties": {{
+            "material": "plastic",
+            "color": "clear",
+            "size": "medium",
+            "shape": "cylindrical",
+            "weight": "light",
+            "transparency": "transparent",
+            "texture": "smooth",
+            "pattern": "solid",
+            "reflectance": "glossy",
+            "symmetry": "radial",
+            "volume": "high",
+            "density": "lowdensity",
+            "length": "medium",
+            "width": "narrow",
+            "height": "tall",
+            "firmness": "firm",
+            "grip": "textured",
+            "balance": "balanced",
+            "handle": "none",
+            "blade": "none",
+            "edge": "none",
+            "point": "none",
+            "corners": "rounded",
+            "skin": "none",
+            "cleanliness": "clean",
+            "condition": "intact",
+            "intactness": "intact",
+            "freshness": "none",
+            "ripeness": "none",
+            "dirt": "none",
+            "count": "single",
+            "orientation": "upright",
+            "position": "on",
+            "odor": "none"
+          }}
+        }},
+
+      "target": {{
+          "type": "PhysicalArtifact",
+          "name": "Container",
+          "properties": {{
+            "material": "glass",
+            "color": "clear",
+            "size": "medium",
+            "shape": "rectangular",
+            "weight": "medium",
+            "transparency": "transparent",
+            "texture": "smooth",
+            "pattern": "solid",
+            "reflectance": "glossy",
+            "symmetry": "bilateral",
+            "volume": "medium",
+            "density": "mediumdensity",
+            "length": "medium",
+            "width": "wide",
+            "height": "medium",
+            "firmness": "rigid",
+            "grip": "smooth",
+            "balance": "balanced",
+            "handle": "present",
+            "blade": "none",
+            "edge": "rounded",
+            "point": "none",
+            "corners": "rounded",
+            "skin": "none",
+            "cleanliness": "clean",
+            "condition": "intact",
+            "intactness": "intact",
+            "freshness": "none",
+            "ripeness": "none",
+            "dirt": "none",
+            "count": "single",
+            "orientation": "upright",
+            "position": "on",
+            "odor": "none"
+          }}
+        }},
+
+
+      "tool": {{
+          "type": "Gripper",
+          "name": "RobotGripper",
+          "properties": {{
+            "type": "parallel-jaw",
+            "fingers": "two",
+            "material": "rubberized",
+            "capability": "grasping",
+            "state": "closed"
+          }}
+        }},
+
+      "location": {{
+          "type": "PhysicalPlace",
+          "name": "Countertop",
+          "properties": {{
+            "type": "surface",
+            "material": "granite",
+            "position": "center",
+            "cleanliness": "clean"
+          }}
+        }},
+
+      "flanagan_phases" : {{
+        "PreMotionPhase": {{
+          "GoalDefinition": {{
+            "task": "Pour Water",
+            "semantic_annotation": "TaskClass:Pouring",
+            "object": {{
+              "id": "bottle_01",
+              "type": "PhysicalArtifact",
+              "properties": {{
+                "contents": "water",
+                "fill_level": "full",
+                "material": "plastic"
+              }},
+              "expected_end_state": {{
+                "ObjectState": {{ "EmptiedIntoTarget": true }}
+              }}
+            }},
+            "target": {{
+              "id": "container_01",
+              "type": "PhysicalArtifact",
+              "properties": {{
+                "capacity_ml": 500,
+                "initial_contents": "empty"
+              }}
+            }},
+            "tool": {{
+              "id": "gripper_standard",
+              "type": "Gripper",
+              "properties": {{
+                "grip_type": "cylindrical",
+                "max_force": 8
+              }}
+            }}
+          }},
+          "PredictiveModel": {{
+            "expected_trajectory": "Trajectory:TiltArcToContainer",
+            "expected_force": {{
+              "initial_N": 1.0,
+              "resistance_range_N": [0.8, 1.5]
+            }},
+            "confidence_level": 0.96,
+            "affordance_model": {{
+              "tool_affords_holding": true,
+              "object_affords_pouring": true
+            }}
+          }},
+          "MotionPlanning": {{
+            "planned_trajectory": "Trajectory:TiltPourArc",
+            "obstacle_avoidance": "Basic",
+            "energy_efficiency": "Optimized"
+          }}
+        }},
+        "InitiationPhase": {{
+          "InitialState": {{
+            "robot_pose": {{
+              "position": [0.0, 0.0, 0.0],
+              "orientation": [0.0, 0.0, 0.0, 1.0]
+            }},
+            "tool_position": [0.3, 0.0, 0.2],
+            "target_object_position": [0.4, 0.1, 0.0]
+          }},
+          "MotionInitialization": {{
+            "joint_activation": {{
+              "joint1": 25,
+              "joint2": 35
+            }},
+            "velocity_profile": "Profile:LinearRampUp",
+            "motion_priming": {{
+              "pregrasp_pose_reached": true,
+              "tool_ready": true
+            }}
+          }},
+          "SubPhases": [
+            {{
+              "name": "Reaching",
+              "description": "Move end-effector toward the bottle",
+              "goalState": {{ "ArmState": {{ "Aligned": true }} }}
+            }},
+            {{
+              "name": "Grasping",
+              "description": "Grasp the bottle using gripper",
+              "goalState": {{ "ToolState": {{ "Grasped": true }} }}
+            }}
+          ],
+          "SymbolicGoals": {{
+            "GripperStatus": {{ "Engaged": true }},
+            "ToolState": {{ "Grasped": true }},
+            "ArmState": {{ "Aligned": true }}
+          }},
+          "SemanticAnnotation": "PhaseClass:Initiation"
+        }},
+        "ExecutionPhase": {{
+          "SubPhases": [
+            {{
+              "name": "AlignToolWithTarget",
+              "description": "Align bottle above the container",
+              "goalState": {{ "ToolState": {{ "Aligned": true }} }}
+            }},
+            {{
+              "name": "Approaching",
+              "description": "Move bottle into pouring position",
+              "goalState": {{
+                "ToolState": {{ "Engaged": true }},
+                "TargetObjectState": {{ "Contacted": true }}
+              }}
+            }}
+          ],
+          "SymbolicGoals": {{
+            "ToolState": {{ "ReadyForPour": true }},
+            "TargetObjectState": {{ "PreparedToReceive": true }}
+          }},
+          "FeedforwardControl": {{
+            "predicted_forces": {{
+              "initial_force": 1.0,
+              "tilt_force_range": [0.8, 1.5]
+            }},
+            "predicted_positions": {{
+              "start": [0.4, 0.1, 0.2],
+              "end": [0.4, 0.1, 0.15]
+            }},
+            "error_tolerance": {{
+              "position_error": 0.005,
+              "force_error": 0.05
+            }}
+          }},
+          "FeedbackControl": {{
+            "corrective_actions": {{
+              "adjust_tilt": true,
+              "stabilize_container": true
+            }},
+            "sensor_feedback": {{
+              "tilt_angle": 45,
+              "flow_started": true
+            }}
+          }},
+          "SensoryIntegration": {{
+            "tactile": {{
+              "gripper_force": 5.0
+            }},
+            "visual": {{
+              "liquid_stream_detected": true,
+              "container_position": [0.4, 0.1, 0.15]
+            }},
+            "proprioceptive": {{
+              "joint_positions": [25, 35],
+              "joint_velocities": [0.2, 0.15]
+            }}
+          }},
+          "SemanticAnnotation": "PhaseClass:Execution"
+        }},
+        "InteractionPhase": {{
+          "SubPhases": [
+            {{
+              "name": "Pouring",
+              "description": "Tilt bottle to pour water",
+              "goalState": {{ "FlowState": {{ "Initiated": true }} }}
+            }},
+            {{
+              "name": "MonitorAndControl (or) MonitoringJointState",
+              "description": "Adjust tilt and monitor flow",
+              "goalState": {{ "ControlState": {{ "Stable": true }} }}
+            }},
+            {{
+              "name": "StopPour (or) Orienting",
+              "description": "Return bottle to upright",
+              "goalState": {{ "FlowState": {{ "Stopped": true }} }}
+            }}
+          ],
+          "SymbolicGoals": {{
+            "TaskStatus": {{ "Pouring": true }}
+          }},
+          "ForceAdaptation": {{
+            "grip_force": {{
+              "initial_grip": 4.0,
+              "adjusted_grip": 4.5
+            }},
+            "tilt_force": {{
+              "initial_tilt": 1.0,
+              "adaptive_tilt": 1.3
+            }}
+          }},
+          "ObjectModeling": {{
+            "liquid_properties": {{
+              "viscosity": 0.001,
+              "flow_rate": 0.2
+            }}
+          }},
+          "SemanticAnnotation": "PhaseClass:Interaction"
+        }},
+        "TerminationPhase": {{
+          "SubPhases": [
+            {{
+              "name": "Orienting",
+              "description": "Return bottle to upright position",
+              "goalState": {{ "OrientationState": {{ "Upright": true }} }}
+            }},
+            {{
+              "name": "Placing (and) Releasing",
+              "description": "Place bottle back and release grip",
+              "goalState": {{ "GripperStatus": {{ "Released": true }} }}
+            }}
+          ],
+          "SymbolicGoals": {{
+            "ObjectState": {{ "Placed": true }},
+            "GripperStatus": {{ "Released": true }}
+          }},
+          "EndEffectorStabilization": {{
+            "final_position": {{
+              "gripper_position": [0.3, 0.0, 0.3]
+            }},
+            "reset_trajectory": "Trajectory:RetractToStandby"
+          }},
+          "SuccessVerification": {{
+            "outcome_check": {{
+              "liquid_transferred": true,
+              "no_spillage": true
+            }},
+            "error_analysis": {{
+              "pour_accuracy": 0.02
+            }}
+          }},
+          "SemanticAnnotation": "PhaseClass:Termination"
+        }},
+        "PostMotionPhase": {{
+          "SubPhases": [
+            {{
+              "name": "UpdateStatus",
+              "description": "Record task completion and update world model",
+              "goalState": {{ "KnowledgeBase": {{ "Updated": true }} }}
+            }},
+            {{
+              "name": "PrepareNextTask",
+              "description": "Reset for next operation",
+              "goalState": {{ "SystemState": {{ "Initialized": true }} }}
+            }}
+          ],
+          "SymbolicGoals": {{
+            "SystemState": {{ "Ready": true }}
+          }},
+          "LearningUpdate": {{
+            "model_refinement": {{
+              "force_model_update": {{
+                "tilt_force": 1.3
+              }},
+              "trajectory_model_update": {{
+                "pour_offset_correction": 0.01
+              }}
+            }},
+            "reinforcement": {{
+              "successful_pour": true,
+              "reinforce_parameters": {{
+                "grip_force": 4.5
+              }}
+            }}
+          }},
+          "ErrorCorrection": {{
+            "deviation_analysis": {{
+              "pouring_offset": 0.015,
+              "slip_event": false
+            }},
+            "parameter_update": {{
+              "tilt_force_range": [1.1, 1.5],
+              "grip_force_range": [4.3, 4.7]
+            }}
+          }},
+          "SemanticAnnotation": "PhaseClass:PostMotion"
+        }}
+      }},
+
+      "framenet" : {{
+        "framenet": "pouring",
+        "frame": "Pouring",
+        "lexical-unit": "pour.v",
+        "core": {{
+            "agent": "robot",
+            "theme_patient": "water",
+            "instrument": "bottle",
+            "source": "bottle",
+            "goal": "container",
+            "result": "container has water"
+            }},
+        "peripheral": {{
+          "location": "kitchen workspace",
+          "manner": "gently",
+          "direction": "downward",
+          "time": "during preparation",
+          "quantity": "one container",
+          "portion": "full"
+          }}
+      }}
+
+    }}
+
+    Now, given the instruction below, produce a similar output:
+
+    Instruction: {input_instruction}
+"""

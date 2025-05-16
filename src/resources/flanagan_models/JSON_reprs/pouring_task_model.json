@@ -1,0 +1,375 @@
+{
+  "task": "PouringAction",
+  "PreMotionPhase": {
+    "GoalDefinition": {
+      "task": "Pour Water",
+      "semantic_annotation": "TaskClass:Pouring",
+      "object": {
+        "id": "container_bottle_01",
+        "type": "Bottle",
+        "properties": {
+          "fill_level": "full",
+          "material": "plastic"
+        },
+        "expected_end_state": {
+          "ObjectState": {
+            "EmptiedIntoTarget": true
+          }
+        }
+      },
+      "tool": {
+        "id": "gripper_standard",
+        "type": "Gripper",
+        "properties": {
+          "grip_type": "cylindrical",
+          "max_force": 8
+        }
+      }
+    },
+    "PredictiveModel": {
+      "expected_trajectory": "Trajectory:TiltArcToCup",
+      "expected_force": {
+        "initial_N": 1.0,
+        "resistance_range_N": [
+          0.8,
+          2.0
+        ]
+      },
+      "confidence_level": 0.96,
+      "affordance_model": {
+        "tool_affords_holding": true,
+        "object_affords_pouring": true
+      }
+    },
+    "MotionPlanning": {
+      "planned_trajectory": "Trajectory:TiltPourArc",
+      "obstacle_avoidance": "Basic",
+      "energy_efficiency": "Optimized"
+    }
+  },
+  "InitiationPhase": {
+    "InitialState": {
+      "robot_pose": {
+        "position": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "orientation": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "tool_position": [
+        0.3,
+        0.0,
+        0.2
+      ],
+      "target_object_position": [
+        0.4,
+        0.1,
+        0.0
+      ]
+    },
+    "MotionInitialization": {
+      "joint_activation": {
+        "joint1": 25,
+        "joint2": 35
+      },
+      "velocity_profile": "Profile:LinearRampUp",
+      "motion_priming": {
+        "pregrasp_pose_reached": true,
+        "tool_ready": true
+      }
+    },
+    "SubPhases": [
+      {
+        "name": "Reach",
+        "description": "Move end-effector toward the container",
+        "goalState": {
+          "ArmState": {
+            "Aligned": true
+          }
+        }
+      },
+      {
+        "name": "Grasp",
+        "description": "Engage the container using the gripper",
+        "goalState": {
+          "ToolState": {
+            "Grasped": true
+          }
+        }
+      }
+    ],
+    "SymbolicGoals": {
+      "GripperStatus": {
+        "Engaged": true
+      },
+      "ToolState": {
+        "Grasped": true
+      },
+      "ArmState": {
+        "Aligned": true
+      }
+    },
+    "SemanticAnnotation": "PhaseClass:Initiation"
+  },
+  "ExecutionPhase": {
+    "SubPhases": [
+      {
+        "name": "AlignToolWithTarget",
+        "description": "Align container above the receiving cup",
+        "goalState": {
+          "ToolState": {
+            "Aligned": true
+          }
+        }
+      },
+      {
+        "name": "ApproachTarget",
+        "description": "Move container into pouring position",
+        "goalState": {
+          "ToolState": {
+            "Engaged": true
+          },
+          "TargetObjectState": {
+            "Contacted": true
+          }
+        }
+      }
+    ],
+    "SymbolicGoals": {
+      "ToolState": {
+        "ReadyForPour": true
+      },
+      "TargetObjectState": {
+        "PreparedToReceive": true
+      }
+    },
+    "FeedforwardControl": {
+      "predicted_forces": {
+        "initial_force": 1.0,
+        "tilt_force_range": [
+          0.8,
+          1.5
+        ]
+      },
+      "predicted_positions": {
+        "start": [
+          0.4,
+          0.1,
+          0.2
+        ],
+        "end": [
+          0.4,
+          0.1,
+          0.15
+        ]
+      },
+      "error_tolerance": {
+        "position_error": 0.005,
+        "force_error": 0.05
+      }
+    },
+    "FeedbackControl": {
+      "corrective_actions": {
+        "adjust_tilt": true,
+        "stabilize_container": true
+      },
+      "sensor_feedback": {
+        "tilt_angle": 45,
+        "flow_started": true
+      }
+    },
+    "SensoryIntegration": {
+      "tactile": {
+        "gripper_force": 5.0
+      },
+      "visual": {
+        "liquid_stream_detected": true,
+        "container_position": [
+          0.4,
+          0.1,
+          0.15
+        ]
+      },
+      "proprioceptive": {
+        "joint_positions": [
+          25,
+          35
+        ],
+        "joint_velocities": [
+          0.2,
+          0.15
+        ]
+      }
+    },
+    "SemanticAnnotation": "PhaseClass:Execution"
+  },
+  "InteractionPhase": {
+    "SubPhases": [
+      {
+        "name": "Pour",
+        "description": "Tilt container to pour liquid",
+        "goalState": {
+          "FlowState": {
+            "Initiated": true
+          }
+        }
+      },
+      {
+        "name": "MonitorAndControl",
+        "description": "Adjust tilt and monitor flow",
+        "goalState": {
+          "ControlState": {
+            "Stable": true
+          }
+        }
+      },
+      {
+        "name": "StopPour",
+        "description": "Return container to upright",
+        "goalState": {
+          "FlowState": {
+            "Stopped": true
+          }
+        }
+      }
+    ],
+    "SymbolicGoals": {
+      "TaskStatus": {
+        "Pouring": true
+      }
+    },
+    "ForceAdaptation": {
+      "grip_force": {
+        "initial_grip": 4.0,
+        "adjusted_grip": 4.5
+      },
+      "tilt_force": {
+        "initial_tilt": 1.0,
+        "adaptive_tilt": 1.3
+      }
+    },
+    "ObjectModeling": {
+      "liquid_properties": {
+        "viscosity": 0.001,
+        "flow_rate": 0.2
+      }
+    },
+    "SemanticAnnotation": "PhaseClass:Interaction"
+  },
+  "TerminationPhase": {
+    "SubPhases": [
+      {
+        "name": "ReturnToUpright",
+        "description": "Return container to upright position",
+        "goalState": {
+          "OrientationState": {
+            "Upright": true
+          }
+        }
+      },
+      {
+        "name": "PlaceAndRelease",
+        "description": "Place container and release grip",
+        "goalState": {
+          "GripperStatus": {
+            "Released": true
+          }
+        }
+      }
+    ],
+    "SymbolicGoals": {
+      "ObjectState": {
+        "Placed": true
+      },
+      "GripperStatus": {
+        "Released": true
+      }
+    },
+    "EndEffectorStabilization": {
+      "final_position": {
+        "gripper_position": [
+          0.3,
+          0.0,
+          0.3
+        ]
+      },
+      "reset_trajectory": "Trajectory:RetractToStandby"
+    },
+    "SuccessVerification": {
+      "outcome_check": {
+        "liquid_transferred": true,
+        "no_spillage": true
+      },
+      "error_analysis": {
+        "pour_accuracy": 0.02
+      }
+    },
+    "SemanticAnnotation": "PhaseClass:Termination"
+  },
+  "PostMotionPhase": {
+    "SubPhases": [
+      {
+        "name": "UpdateStatus",
+        "description": "Record pouring completion and update model",
+        "goalState": {
+          "KnowledgeBase": {
+            "Updated": true
+          }
+        }
+      },
+      {
+        "name": "PrepareNextTask",
+        "description": "Reset for next operation",
+        "goalState": {
+          "SystemState": {
+            "Initialized": true
+          }
+        }
+      }
+    ],
+    "SymbolicGoals": {
+      "SystemState": {
+        "Ready": true
+      }
+    },
+    "LearningUpdate": {
+      "model_refinement": {
+        "force_model_update": {
+          "tilt_force": 1.3
+        },
+        "trajectory_model_update": {
+          "pour_offset_correction": 0.01
+        }
+      },
+      "reinforcement": {
+        "successful_pour": true,
+        "reinforce_parameters": {
+          "grip_force": 4.5
+        }
+      }
+    },
+    "ErrorCorrection": {
+      "deviation_analysis": {
+        "pouring_offset": 0.015,
+        "slip_event": false
+      },
+      "parameter_update": {
+        "tilt_force_range": [
+          1.1,
+          1.5
+        ],
+        "grip_force_range": [
+          4.3,
+          4.7
+        ]
+      }
+    },
+    "SemanticAnnotation": "PhaseClass:PostMotion"
+  }
+}
