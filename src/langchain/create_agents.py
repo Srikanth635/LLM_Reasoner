@@ -48,16 +48,18 @@ def route_tools(state: dict):
         return "tools"
     return END
 
-def create_agent(llm, tools):
+def create_agent(llm, tools, agent_sys_prompt=""):
 
     # llm_ollama = ollama_llm.bind_tools(tools)
     llm_with_tools = llm.bind_tools(tools)
 
+    if not agent_sys_prompt:
+        agent_sys_prompt = SystemMessage(content="You are a smart agent and just pass on the tool output as it is with"
+                                          "out any modification or further explanations")
+
     # Agent Node
     def chatbot(state: AgentState):
-        messages = ([SystemMessage(content="You are a smart agent and just pass on the tool output as it is with"
-                                          "out any modification or further explanations")] + state["messages"])
-                    # + [HumanMessage(content="/no_think")]) #Dont add any additional explanation
+        messages = [agent_sys_prompt] + state["messages"]
         return {"messages": [llm_with_tools.invoke(messages)]}
 
     # Tool Node
