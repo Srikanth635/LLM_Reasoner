@@ -7,7 +7,7 @@ from langgraph.graph import MessagesState
 from langgraph.types import Command
 
 # Agent Specific Tools
-web_search_tool = TavilySearchResults(max_results=2)
+web_search_tool = TavilySearchResults(max_results=1)
 
 
 # Agent
@@ -25,3 +25,10 @@ def web_research_node(state: MessagesState) -> Command[Literal["supervisor"]]:
         },
         goto="supervisor",
     )
+
+def web_research_node_pal(state: MessagesState):
+    result = websearch_agent.invoke(state)
+    # print("Web Research Results:", type(result), result)
+    return {
+            "messages": result["messages"][-1]
+        }

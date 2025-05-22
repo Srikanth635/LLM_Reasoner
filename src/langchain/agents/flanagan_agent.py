@@ -433,6 +433,12 @@ def flanagan_node(state: MessagesState) -> Command[Literal["supervisor"]]:
         goto="supervisor",
     )
 
+def flanagan_node_pal(state: MessagesState):
+    result = flanagan_agent.invoke(state)
+    return {
+            "messages": result["messages"][-1]
+        }
+
 
 if __name__ == "__main__":
     print("INSIDE MAIN")

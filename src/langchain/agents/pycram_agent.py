@@ -13,6 +13,8 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.prompts import ChatPromptTemplate
 from typing import Dict, Type, List, Literal, Union, Annotated
 from pydantic import BaseModel, Field
+from langgraph.graph import MessagesState
+from langgraph.types import Command
 from enum import Enum
 
 ## Locals
@@ -171,6 +173,7 @@ def model_selector(instruction : str):
     :return: List of relevant action model class names (as strings).
     """
     print("INSIDE MODEL SELECTOR TOOL")
+    print("The instruction is :", instruction)
     answers["instruction"] = instruction
     chain = model_selector_prompt | structured_ollama_llm_pc1
     response = chain.invoke({"input_instruction": instruction})
@@ -306,6 +309,32 @@ pycram_agent_sys_prompt = SystemMessage(content=sys_prompt_content)
 # Create the agent
 pycram_agent = create_agent(ollama_llm, [model_selector, model_populator],
                             agent_sys_prompt=pycram_agent_sys_prompt)
+
+# Agent as Node
+def pycram_node(state: MessagesState) -> Command[Literal["supervisor"]]:
+    # messages = [
+    #                {"role": "system", "content": framenet_system_prompt},
+    #            ] + state["messages"]
+    result = pycram_agent.invoke(state)
+    return Command(
+        update={
+            "messages": [
+                HumanMessage(content=result["messages"][-1].content, name="pycram")
+            ]
+        },
+        goto="supervisor",
+    )
+
+# Agent as Node
+def pycram_node_pal(state: MessagesState):
+    # messages = [
+    #                {"role": "system", "content": framenet_system_prompt},
+    #            ] + state["messages"]
+    result = pycram_agent.invoke(state)
+    # print("Pycram agent results: ", type(result),result)
+    return {
+            "messages": result["messages"][-1]
+        }
 
 if __name__ == '__main__':
     print(Arms.LEFT)

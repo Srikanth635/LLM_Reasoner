@@ -6,6 +6,7 @@ from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain_core.messages import HumanMessage
 from langchain_core.tools import tool
 from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import PydanticOutputParser
 from langchain.agents import Tool
 
 from langgraph.graph import MessagesState
@@ -156,7 +157,8 @@ structured_llm_fn = llm.with_structured_output(FrameNetRepresentation)
 structured_ollama_llm_fn = ollama_llm.with_structured_output(FrameNetRepresentation, method="json_schema")
 
 # Agent Specific Tools
-@tool
+@tool(description="framenet representation of the input string with direct return tool output",
+      return_direct=True)
 def framenet_tool(instruction: str):
     """
     Generate a FrameNet-style semantic representation for a given natural language instruction.
@@ -198,15 +200,15 @@ def frame_tool(instruction: str):
     # return "Srikanth"
     return response
 
-framenet_tool_direct_return = Tool.from_function(
-    func=framenet_tool,
-    name= "framenet_tool",
-    description= "framenet representation of the input string with direct return tool output",
-    return_direct=True  # ✅ This ensures the agent returns it as-is
-)
+# framenet_tool_direct_return = Tool.from_function(
+#     func=framenet_tool,
+#     name= "framenet_tool",
+#     description= "",
+#     return_direct=True  # ✅ This ensures the agent returns it as-is
+# )
 
 # Agent
-framenet_agent = create_agent(ollama_llm, [framenet_tool_direct_return])
+framenet_agent = create_agent(ollama_llm, [framenet_tool])
 
 
 # Agent as Node
@@ -223,6 +225,19 @@ def framenet_node(state: MessagesState) -> Command[Literal["supervisor"]]:
         },
         goto="supervisor",
     )
+
+def framenet_node_pal(state: MessagesState):
+    # messages = [
+    #                {"role": "system", "content": framenet_system_prompt},
+    #            ] + state["messages"]
+
+    # framenet_agent_output_parser = PydanticOutputParser(pydantic_object=FrameNetRepresentation)
+    # agent_chain = framenet_agent | framenet_agent_output_parser
+    # result = agent_chain.invoke(state)
+    result = framenet_agent.invoke(state)
+    return {
+        "messages": result["messages"][-1]
+    }
 
 
 if __name__ == "__main__":
