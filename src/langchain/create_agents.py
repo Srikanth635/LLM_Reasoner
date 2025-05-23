@@ -4,10 +4,14 @@ from typing_extensions import TypedDict, Sequence
 from langchain_core.messages import BaseMessage, SystemMessage, HumanMessage
 from langchain_core.messages.tool import ToolMessage
 from langgraph.graph.message import add_messages
-from langgraph.graph import StateGraph, END
+from langgraph.graph import StateGraph, END, MessagesState
 from langgraph.prebuilt import ToolNode, tools_condition
+from langgraph.checkpoint.memory import MemorySaver
 
 from src.langchain.llm_configuration import *
+from pydantic import Field
+
+memory = MemorySaver()
 
 class AgentState(TypedDict):
     """The state of the agent."""
@@ -48,8 +52,8 @@ def route_tools(state: dict):
         return "tools"
     return END
 
-def create_agent(llm, tools, agent_sys_prompt=""):
-
+def create_agent(llm, tools, agent_sys_prompt="", agent_state_schema: type = AgentState):
+    print("Sub Agent Creation")
     # llm_ollama = ollama_llm.bind_tools(tools)
     llm_with_tools = llm.bind_tools(tools)
 
@@ -58,14 +62,14 @@ def create_agent(llm, tools, agent_sys_prompt=""):
                                           "out any modification or further explanations")
 
     # Agent Node
-    def chatbot(state: AgentState):
+    def chatbot(state: MessagesState):
         messages = [agent_sys_prompt] + state["messages"]
         return {"messages": [llm_with_tools.invoke(messages)]}
 
     # Tool Node
     tool_node = BasicToolNode(tools=tools)
 
-    graph_builder = StateGraph(AgentState)
+    graph_builder = StateGraph(agent_state_schema)
     graph_builder.add_node("agent", chatbot)
     graph_builder.add_node("tools", tool_node)
     graph_builder.add_conditional_edges(
@@ -76,3 +80,83 @@ def create_agent(llm, tools, agent_sys_prompt=""):
     graph_builder.add_edge("tools", "agent")
     graph_builder.set_entry_point("agent")
     return graph_builder.compile()
+
+# --- Updated create_agent function ---
+# def create_agent2(llm, tools, agent_sys_prompt="", agent_state_schema: type = AgentState, config=None):
+#     """
+#     Creates an agent workflow graph.
+#
+#     Args:
+#         llm: The language model to be used.
+#         tools: A list of tools the agent can use.
+#         agent_sys_prompt (str, optional): The system prompt for the agent.
+#                                          Defaults to a generic prompt.
+#         agent_state_schema (type, optional): The TypedDict class defining the agent's state.
+#                                              Defaults to AgentState.
+#     Returns:
+#         A compiled StateGraph representing the agent workflow.
+#     """
+#
+#     llm_with_tools = llm.bind_tools(tools)
+#
+#     if not agent_sys_prompt:
+#         # Ensure agent_sys_prompt is a SystemMessage if it's a string
+#         final_agent_sys_prompt = SystemMessage(
+#             content="You are a smart agent and just pass on the tool output as it is with"
+#                     "out any modification or further explanations"
+#         )
+#     elif isinstance(agent_sys_prompt, str):
+#         final_agent_sys_prompt = SystemMessage(content=agent_sys_prompt)
+#     else:
+#         final_agent_sys_prompt = agent_sys_prompt
+#
+#
+#     # Agent Node
+#     def chatbot(state: dict): # Use dict here for more flexibility or the passed agent_state_schema
+#         # Ensure messages are handled correctly based on the agent_state_schema
+#         # This assumes 'messages' is a key in your state
+#         current_messages = state.get("messages", [])
+#         messages_for_llm = [final_agent_sys_prompt] + current_messages
+#         response = llm_with_tools.invoke(messages_for_llm)
+#         return {"messages": [response]} # Ensure this matches how add_messages expects it
+#
+#     # Tool Node
+#     tool_node = BasicToolNode(tools=tools)
+#
+#     # Use the passed agent_state_schema for the graph
+#     graph_builder = StateGraph(agent_state_schema)
+#     graph_builder.add_node("agent", chatbot)
+#     graph_builder.add_node("tools", tool_node)
+#     graph_builder.add_conditional_edges(
+#         "agent",
+#         route_tools,
+#         {"tools": "tools", END: END}
+#     )
+#     graph_builder.add_edge("tools", "agent")
+#     graph_builder.set_entry_point("agent")
+#     return graph_builder.compile(checkpointer=memory)
+
+
+if __name__ == "__main__":
+    print()
+    # from src.langchain.agents.websearch_agent import web_search_tool
+    #
+    #
+    # from dotenv import load_dotenv, find_dotenv
+    #
+    # load_dotenv(find_dotenv(), override=True)
+    #
+    # class TestState(TypedDict):
+    #     user_query : str
+    #     web_answer : str
+    #
+    # graph = create_agent2(ollama_llm, tools=[web_search_tool], agent_state_schema=TestState)
+    #
+    # config = {"configurable": {"thread_id": "1"}}
+    #
+    # print(graph.invoke({"user_query" : HumanMessage(content="who is 2023 ipl champions")}, config=config))
+    #
+    # print("-" *10)
+    #
+    # print(graph.get_state(config=config))
+

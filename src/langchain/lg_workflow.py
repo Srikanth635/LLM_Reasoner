@@ -18,8 +18,8 @@ builder.add_node("mather", math_node)
 builder.add_node("web_researcher", web_research_node)
 builder.add_node("framenet", framenet_node)
 builder.add_node("flanagan", flanagan_node)
-graph = builder.compile()
-# graph = builder.compile(checkpointer=memory)
+# graph = builder.compile()
+graph = builder.compile(checkpointer=memory)
 
 
 

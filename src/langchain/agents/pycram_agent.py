@@ -153,6 +153,10 @@ action_classes = [PickUpAction, NavigateAction, PlaceAction, SetGripperAction, L
 class Actions(BaseModel):
     models : List[Union[*action_classes]] = Field(description="list of instantiated action model instances")
 
+class PyCRAMState(TypedDict):
+    action_names : Annotated[list, add_messages]
+    action_models : Annotated[list, add_messages]
+
 
 model_selector_prompt = ChatPromptTemplate.from_template(model_selector_prompt_template)
 model_populator_prompt = ChatPromptTemplate.from_template(model_populator_prompt_template)
@@ -327,6 +331,17 @@ def pycram_node(state: MessagesState) -> Command[Literal["supervisor"]]:
 
 # Agent as Node
 def pycram_node_pal(state: MessagesState):
+    # messages = [
+    #                {"role": "system", "content": framenet_system_prompt},
+    #            ] + state["messages"]
+    result = pycram_agent.invoke(state)
+    # print("Pycram agent results: ", type(result),result)
+    return {
+            "messages": result["messages"][-1]
+        }
+
+# Agent as Node
+def pycram_node_pal_own(state: MessagesState):
     # messages = [
     #                {"role": "system", "content": framenet_system_prompt},
     #            ] + state["messages"]
