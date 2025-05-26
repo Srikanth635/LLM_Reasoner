@@ -12,3 +12,5 @@ from langchain_ollama import ChatOllama
 
 ollama_llm = ChatOllama(model="qwen3:8b")
 # ollama_llm = ChatOllama(model="qwen3:4b")
+
+# ollama_llm = ChatOllama(model="gemma3:4b")

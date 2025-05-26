@@ -200,6 +200,11 @@ def frame_tool(instruction: str):
     # return "Srikanth"
     return response
 
+# Framenet Agent State
+class FramenetState(TypedDict):
+    framenet : Annotated[list[FrameNetRepresentation], add_messages, Field(description="Framenet Representations")]
+    messages : Annotated[list, add_messages]
+
 # framenet_tool_direct_return = Tool.from_function(
 #     func=framenet_tool,
 #     name= "framenet_tool",
@@ -208,7 +213,8 @@ def frame_tool(instruction: str):
 # )
 
 # Agent
-framenet_agent = create_agent(ollama_llm, [framenet_tool])
+# framenet_agent = create_agent(ollama_llm, [framenet_tool], agent_state_schema=FramenetState)
+framenet_agent = create_framenet_agent(ollama_llm, [framenet_tool], agent_state_schema=FramenetState)
 
 
 # Agent as Node
@@ -239,6 +245,11 @@ def framenet_node_pal(state: MessagesState):
         "messages": result["messages"][-1]
     }
 
+def framenet_node_pal_custom(state:MessagesState):
+    result = framenet_agent.invoke(state)
+    return {
+        "messages": result["messages"][-1]
+    }
 
 if __name__ == "__main__":
     print("INSIDE MAIN")
