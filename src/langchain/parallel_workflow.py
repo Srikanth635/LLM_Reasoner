@@ -57,7 +57,7 @@ builder.add_edge("pycram", "aggregator")
 builder.add_edge("framenet", "aggregator")
 # builder.add_edge("flanagan", "aggregator")
 builder.add_edge("aggregator", END)
-pal_graph = builder.compile(checkpointer=memory)
+pal_graph = builder.compile()
 
 
 # builder = StateGraph(MessagesState)

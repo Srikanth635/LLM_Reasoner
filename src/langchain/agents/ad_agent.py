@@ -1,3 +1,4 @@
+from dotenv.variables import Literal
 from langgraph.graph import MessagesState
 from src.langchain.create_agents import *
 from src.langchain.llm_configuration import *
@@ -13,50 +14,70 @@ import json
 from langchain_core.runnables import RunnableConfig
 
 agent_sys_prompt = """
-    You are a highly knowledgeable reasoning agent tasked with converting natural language instructions into structured, machine-readable CRAM Action Designators. 
-    Each action designator captures the semantics of a physical task by clearly describing the action, the object involved, the tool used, and the location of the activity,
-    all enriched with detailed, context-appropriate properties.
+    You are a robotic reasoning agent responsible for converting natural language instructions into structured CRAM-style action designators.
     
-    You must generate a JSON-formatted action designator with the following four core entities:
-    
-    1. action — What is being done.
-    2. object — The physical item being manipulated or referenced.
-    3. tool — The robot or instrument executing the task.
-    4. location — The physical place where the task occurs.
+    Your task is to interpret user-provided robot task instructions and produce semantic, machine-readable JSON outputs that describe what the robot must do in the form of a CRAM action designator. To achieve this, you must use a designated tool that returns the complete designator structure.
     
     ---
     
-    GENERAL GUIDELINES:
+    TOOL ACCESS
     
-    - Extract all implied or explicit information from the instruction.
-    - Always use accurate names for object and location types.
-    - Include all relevant properties for each entity. Omit nothing simply because it's not explicitly stated — if it can be reasonably inferred, include it.
-    - Be consistent with terminology, e.g., use "type": "PhysicalArtifact" for objects and "type": "PhysicalPlace" for locations.
-    - Always format the output as valid JSON.
-    - Use camelCase keys for properties inside "properties" objects.
+    You have access to one tool:
+    
+    `model_selector(instruction: str) -> dict`
+    
+    - This tool analyzes the instruction and returns a fully structured CRAM-style action designator as a Python dictionary (JSON-like).
+    - The designator includes fields for action, object, tool, and location—each with nested properties.
+    - You must invoke this tool for every instruction and return its response as-is.
+    
+    This tool is the only mechanism for generating action designators. Do not write them manually.
     
     ---
     
-    EXPECTED STRUCTURE:
+    OBJECTIVE
+    
+    Your job is to:
+    
+    1. Accept a user instruction.
+    2. Invoke the `model_selector` tool with that instruction.
+    3. Return the resulting action designator exactly as provided by the tool.
+    
+    The action designator must include:
+    
+    - action: type of robot action (e.g., PickingUp, Placing)
+    - object: physical item involved, with properties like material, size, color, etc.
+    - tool: actuator used, typically a gripper, with technical properties
+    - location: where the action occurs, including surface, area, and environmental attributes
+    
+    ---
+    
+    REASONING INSTRUCTIONS
+    
+    - Always invoke the tool to obtain the action designator. Do not attempt to infer or fabricate the designator yourself.
+    - Trust the tool's structure and return it directly.
+    - If the tool output is incomplete or needs inference, make safe and reasonable assumptions to ensure completeness.
+    - Output must always be valid JSON.
+    
+    ---
+    
+    OUTPUT FORMAT
+    
+    The tool returns a structure like:
     
     {
       "action": {
-        "type": "<ActionType>" // e.g., "PickingUp", "Placing", "Opening", etc.
+        "type": "PickingUp"
       },
       "object": {
         "type": "PhysicalArtifact",
-        "name": "<ObjectName>",
+        "name": "Bottle",
         "properties": {
-          "material": "<material>",
-          "color": "<color>",
-          "size": "<size>",
-          "shape": "<shape>",
-          "texture": "<texture>",
-          "cleanliness": "<clean/dirty>",
-          "weight": "<light/medium/heavy>",
-          "condition": "<new/used/broken/etc.>",
-          "contents": "<if applicable>",
-          "state": "<grasped/placed/etc.>"
+          "material": "plastic",
+          "color": "red",
+          "size": "medium",
+          "shape": "cylindrical",
+          "cleanliness": "clean",
+          "weight": "light"
         }
       },
       "tool": {
@@ -66,36 +87,72 @@ agent_sys_prompt = """
           "type": "parallel-jaw",
           "fingers": "two",
           "material": "rubberized",
-          "capability": "<grasping/holding/etc.>",
-          "state": "<open/closed>",
-          "holding": "<ObjectName if applicable>"
+          "capability": "grasping",
+          "state": "open"
         }
       },
       "location": {
         "type": "PhysicalPlace",
-        "name": "<LocationName>",
+        "name": "FloorNearSink",
         "properties": {
-          "type": "<floor/table/cupboard/shelf/etc.>",
-          "surface": "<material>",
-          "area": "<specific area like under-table/inside-cupboard>",
-          "height": "<numeric value or qualitative descriptor>",
-          "color": "<color>",
-          "material": "<material>",
-          "cleanliness": "<clean/dirty>",
-          "position": "<relative or absolute spatial descriptor>",
-          "contents": "<if applicable>",
-          "door": "<open/closed if applicable>",
-          "shelf": "<if applicable>"
+          "surface": "tile",
+          "area": "next-to-sink",
+          "height": "zero",
+          "material": "ceramic",
+          "color": "white"
         }
       }
     }
     
     ---
     
-    PROPERTY VALUE REFERENCE:
+    EXAMPLE:
     
-    Use the following values when populating property fields:
+    Input:  
+    "Pick up the red bottle from the floor next to the sink."
     
+    Tool Output:  
+    (The complete JSON as above)
+    
+    Final Response:  
+    Return the output from the tool directly—no changes, no reformats.
+    
+    ---
+    
+    You are a facilitator between user instructions and the structured designator generator. Always route through the tool and return its output faithfully.
+"""
+
+action_designators = []
+
+ad_llm = ollama_llm.with_structured_output(CRAMActionDesignator, method="json_schema")
+
+
+user_prompt_template = """
+
+    You are an intelligent semantic reasoning agent tasked with interpreting freeform natural language instructions and 
+    converting them into machine-readable CRAM-style action designators—structured JSON objects that clearly represent 
+    the intended robotic action, the object involved, the tool used, and the location of the task, all enriched with 
+    detailed and contextually accurate properties for each element.
+
+    ---
+
+    ### STRUCTURE OVERVIEW
+
+    Your output must be a JSON object with the following fields:
+
+    1. **action**: What is being done.
+    2. **object**: The physical item involved.
+    3. **tool**: The actuator or mechanism performing the task.
+    4. **location**: The physical space where the action occurs.
+
+    Each section must include nested `properties` containing semantic details. Use the format shown in the example.
+
+    ---
+
+    ### 📦 PROPERTY VALUE REFERENCE
+
+    Use these standardized property values where applicable:
+
     - size: small, medium, large, tiny, huge
     - length: short, medium, long
     - width: narrow, medium, wide
@@ -130,23 +187,23 @@ agent_sys_prompt = """
     - orientation: upright, sideways, inverted, angled
     - position: on, in, under, near, far, left, right, front, back, center, edge
     - odor: none, mild, strong, sweet, sour, pungent, aromatic, burnt, spicy
-    
+
     ---
-    
-    OUTPUT EXAMPLE 1:
-    
+
+    ### OUTPUT EXAMPLE 1
+
     Input:  
     "Pick up the dropped spoon from the floor near the table."
-    
+
     Output:
-    {
-      "action": {
+    
+      "action": 
         "type": "PickingUp"
-      },
-      "object": {
+      ,
+      "object": 
         "type": "PhysicalArtifact",
         "name": "Spoon",
-        "properties": {
+        "properties": 
           "material": "stainless-steel",
           "color": "silver",
           "size": "small",
@@ -155,32 +212,27 @@ agent_sys_prompt = """
           "cleanliness": "dirty",
           "weight": "light",
           "condition": "dropped"
-        }
-      },
-      "tool": {
+      ,
+      "tool": 
         "type": "Gripper",
         "name": "RobotGripper",
-        "properties": {
+        "properties": 
           "type": "parallel-jaw",
           "fingers": "two",
           "material": "rubberized",
           "capability": "grasping",
           "state": "open"
-        }
-      },
-      "location": {
+      ,
+      "location": 
         "type": "PhysicalPlace",
         "name": "FloorNearTable",
-        "properties": {
+        "properties": 
           "surface": "tile",
           "area": "under-table",
           "height": "zero",
           "color": "white",
           "material": "ceramic",
           "cleanliness": "dirty"
-        }
-      }
-    }
     
     OUTPUT EXAMPLE 2:
     
@@ -188,14 +240,14 @@ agent_sys_prompt = """
     "Grab the spatula from the utensil holder."
     
     Output:
-    {
-        "action": {
+    
+        "action": 
           "type": "PickingUp"
-        },
-        "object": {
+        ,
+        "object": 
           "type": "PhysicalArtifact",
           "name": "Spatula",
-          "properties": {
+          "properties": 
             "material": "silicone",
             "color": "black",
             "size": "long",
@@ -203,24 +255,22 @@ agent_sys_prompt = """
             "handle": "present",
             "cleanliness": "clean",
             "weight": "light",
-            "flexibility": "flexible"
-          }
-        },
-        "tool": {
+            "flexibility": "flexible"        
+        ,
+        "tool": 
           "type": "Gripper",
           "name": "RobotGripper",
-          "properties": {
+          "properties": 
             "type": "parallel-jaw",
             "fingers": "two",
             "material": "rubberized",
             "capability": "grasping",
-            "state": "open"
-          }
-        },
-        "location": {
+            "state": "open"       
+        ,
+        "location": 
           "type": "PhysicalPlace",
           "name": "UtensilHolder",
-          "properties": {
+          "properties": 
             "type": "countertop",
             "material": "ceramic",
             "color": "grey",
@@ -228,86 +278,73 @@ agent_sys_prompt = """
             "state": "full",
             "position": "beside-stove",
             "height": "medium"
-          }
-        }
-    }
-    
+
     OUTPUT EXAMPLE 3:
     
     Input:  
     "Place the glass measuring cup inside the dishwasher."
     
     Output:
-    {
-        "action": {
+    
+        "action": 
           "type": "Placing"
-        },
-        "object": {
+        ,
+        "object": 
           "type": "PhysicalArtifact",
           "name": "MeasuringCup",
-          "properties": {
+          "properties": 
             "material": "glass",
             "color": "clear",
             "size": "medium",
             "shape": "cylindrical",
             "weight": "medium",
             "transparency": "transparent",
-            "condition": "intact"
-          }
-        },
-        "target": {
+            "condition": "intact"    
+        ,
+        "target": 
           "type": "PhysicalPlace",
           "name": "Dishwasher",
-          "properties": {
+          "properties": 
             "type": "appliance",
             "material": "metal",
             "position": "under-counter",
             "doorState": "open"
-          }
-        },
-        "tool": {
+        ,
+        "tool": 
           "type": "Gripper",
           "name": "RobotGripper",
-          "properties": {
+          "properties": 
             "type": "parallel-jaw",
             "fingers": "two",
             "material": "rubberized",
             "capability": "grasping",
             "state": "closed"
-          }
-        }
-    }
     
     ---
-    
-    REASONING INSTRUCTIONS:
-    
-    - Think step-by-step about the intent, environment, and physical interactions involved in the instruction.
-    - Use commonsense inference to deduce any missing details, like object materials or expected cleanliness.
-    - Incorporate spatial understanding to resolve ambiguous or implied location descriptions.
-    - Ensure the tool configuration (open/closed, holding/empty) logically matches the described action.
-    - Ensure consistency and realism across all elements — properties of object, tool, and location should form a coherent scene.
-    - Never leave fields blank if a plausible default can be reasonably inferred.
-    - Avoid hallucination — only add inferred values that fit the context logically.
-    - Your goal is to simulate an intelligent agent with embodied understanding of tasks and their physical context.
-    
-    IMPORTANT NOTE:
-    You are a smart agent and just pass on the tool output as it is without any modification or further explanations
-"""
 
-action_designators = []
+    ### 🧠 REASONING INSTRUCTIONS
 
-ad_llm = ollama_llm.with_structured_output(CRAMActionDesignator, method="json_schema")
+    - Use all relevant properties for each entity (object, tool, location).
+    - Use you semantic knowledge to infer missing details of entities like geometric properties like dimensions, appearance 
+        properties like color, texture, pattern etc., physical properties like weight, firmness, density, etc., with
+        most probable values suited for the entity.
+    - Infer details using commonsense (e.g., dropped spoons are dirty and light) and always assume ideal conditions for entities unless specified
+        like clea
+    - Never omit a field if it can be reasonably deduced.
+    - Be realistic, grounded, and consistent with physical world knowledge.
+    - Output must be valid JSON. Maintain camelCase for all property keys.
 
-user_prompt_template = "Generate cram action designator for the given instruction {instruction}"
+    Generate cram action designator for the given instruction {instruction}
+    
+    """
+
 
 user_prompt = ChatPromptTemplate.from_template(user_prompt_template)
 # ad_agent = create_react_agent(model=ad_llm, tools=[], prompt=agent_sys_prompt)
 
 @tool(description="CRAM action designator generator from natural language instruction",
       return_direct=True)
-def entity_attribute_finder(instruction: str, state: Annotated[MessagesState, InjectedState], config: RunnableConfig,
-                            tool_call_id: Annotated[str, InjectedToolCallId]):
+def entity_attribute_finder(instruction: str):
     """
     Generates CRAM Action Designator with entity descriptions with their attributes and values
     :param instruction: input user natural language instruction
@@ -318,25 +355,26 @@ def entity_attribute_finder(instruction: str, state: Annotated[MessagesState, In
     """
     print("INSIDE ENTITY ATTRIBUTE FINDER")
     print("%" * 10)
-    print("Current Graph State : ", state["messages"])
-    print("config user id : ",config["configurable"].get("user_id"))
-    print("tool call id : ", tool_call_id)
+    # print("Current Graph State : ", state["messages"])
+    # print("config user id : ",config["configurable"].get("user_id"))
+    # print("tool call id : ", tool_call_id)
     print("%"*10)
-    chain = user_prompt | ad_llm
+    chain =  user_prompt | ad_llm
     response = chain.invoke({"instruction": instruction})
     # response_content = response['messages'][-1].content
     cleaned_response = re.sub(r'<think>.*?</think>', '', str(response), flags=re.DOTALL).strip()
     action_designators.append(cleaned_response)
     # print("Cleaned Response : ", cleaned_response)
     json_response = response.model_dump_json(indent=2, by_alias=True)
-    # return json_response
-    return Command(update={
-        "messages" : [ToolMessage(content=json_response, name="entity_attribute_finder", tool_call_id=tool_call_id)]
-    })
+    return json_response
+    # return Command(update={
+    #     "messages" : [ToolMessage(content=json_response, name="entity_attribute_finder", tool_call_id=tool_call_id)]
+    # },
+    # goto='ad_agent')
 
 
-# ad_agent = create_agent(llm=ollama_llm, tools=[entity_attribute_finder], agent_sys_prompt=agent_sys_prompt)
-ad_agent = create_react_agent(model=ollama_llm, tools=[entity_attribute_finder], prompt=agent_sys_prompt, checkpointer=True)
+ad_agent = create_agent(llm=ollama_llm, tools=[entity_attribute_finder], agent_sys_prompt=agent_sys_prompt)
+# ad_agent = create_react_agent(model=ollama_llm, tools=[entity_attribute_finder], prompt=agent_sys_prompt, checkpointer=False)
 
 def ad_agent_node_pal(state: MessagesState):
 
