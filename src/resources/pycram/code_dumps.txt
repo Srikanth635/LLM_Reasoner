@@ -1,0 +1,253 @@
+# Tool Definition -----------------------------------------------------------------------------------------------
+
+@tool(return_direct=True)
+def designator_updater(tool_call_id: Annotated[str, InjectedToolCallId], state: Annotated[CustomState, InjectedState]) -> Command:
+    """
+    Modifies the parameters of the action designator based on the reason for failure and human comment if provided
+    :param tool_call_id: tool_call_id
+    :param state: graph state of the agent
+    :return: Command object to update state with the modified action designator and explanation
+    """
+    print("INSIDE DESIGNATOR UPDATER TOOL")
+    tool_prompt_template = f"""
+        You are a helpful and detail-oriented assistant specialized in robotics action planning and correction.
+        Your task is to correct or modify a given action designator object based on a reported error reason and an optional human comment.
+
+        ## Objectives and Reasoning Chain:
+        1. Extract the 'action_designator', 'reason_for_failure', and 'human_comment' from the graph state of the agent'
+        2. Analyse thoroughly over the action_designator, reason_for_failure and human_comment and understand what the user wants
+        3. Then modify or update only the parameters needed in the action_designator according to the human_comment and reason_for_failure
+        4. Keep all the remaining parameters of the original action designator unchanged.
+
+        ## Inputs
+        - tool_call_id: tool_call_id populated dynamically at run time
+        - state: graph state populated dynamically at run time
+
+        ## Output
+        Command object with corrected or improved version of the original `action_designator` object with modified or updated parameters.
+
+
+        ## Style Notes
+        - Be conservative: modify only what is necessary.
+        - Be consistent with the domain schema (e.g., grasp types, arms, object identifiers).
+        - If multiple corrections are possible, prefer the most contextually plausible.
+        - Maintain syntactic and semantic integrity of the final action designator.
+
+        Begin by reasoning through the error and then output the corrected designator.
+
+        ---
+    """
+    structured_ollama = None
+    tool_prompt  = ChatPromptTemplate.from_template(tool_prompt_template)
+
+    print(f"ACCESSING STATE from tool : ", state['action_designator'], state['reason_for_failure'], state['human_comment'])
+
+    action_designator = state['action_designator']
+    reason_for_failure = state['reason_for_failure']
+    human_comment = state['human_comment']
+
+
+    # if isinstance(reason_for_failure, ObjectNotGraspedErrorModel):
+    #     error_message = reason_for_failure.args[0]
+    #     print(f"Pick Up Error Message", error_message)
+    # elif isinstance(reason_for_failure, ObjectStillInContactModel):
+    #     error_message = reason_for_failure.args[0]
+    #     print(f"Place Error Message", error_message)
+    # elif isinstance(reason_for_failure, ObjectNotPlacedAtTargetLocationModel):
+    #     error_message = reason_for_failure.args
+    #     print(f"Place Error Message Another", error_message)
+    try:
+        if isinstance(reason_for_failure, str):
+            failure_instance = eval(reason_for_failure)
+            failure_type = failure_instance.failure_type
+            failure_cls = next((cls for cls in failure_reasons if
+                                cls.__name__ == failure_type or getattr(cls, 'failure_type', None) == failure_type),
+                               None)
+            if failure_cls is None:
+                raise ValueError(f"Unknown failure_type: {failure_type}")
+            # print("failure Class", failure_cls, type(failure_cls))
+            error_message = failure_instance.args[0]
+            # print(f"Error Message {error_message}")
+    except:
+        print("invalid failure type")
+        # error_message = reason_for_failure
+        # print(f"Error Message", reason_for_failure)
+
+    # if isinstance(action_designator, PickUpAction):
+    #     print("PickUpAction")
+    #     # print(action_designator.object_designator)
+    #     structured_ollama = ollama_llm.with_structured_output(PickUpAction, method="json_schema")
+    # elif isinstance(action_designator, PlaceAction):
+    #     print("PlaceAction")
+    # else:
+    try:
+        if isinstance(action_designator, str):
+            ad = eval(action_designator)
+            # parsed_ad = json.loads(action_designator)
+            action_type = ad.action_type
+            action_cls = next((cls for cls in action_classes if
+                               cls.__name__ == action_type or getattr(cls, 'action_type', None) == action_type), None)
+            if action_cls is None:
+                raise ValueError(f"Unknown action_type: {action_type}")
+            # print("action Class", action_cls, type(action_cls))
+            structured_ollama = ollama_llm.with_structured_output(action_cls, method="json_schema")
+    except:
+        print("Unknown Action Designator")
+
+    ## ToDo invoke llm here
+
+    chain = tool_prompt | structured_ollama
+
+    response = chain.invoke({"action_designator" : action_designator, "reason_for_failure" : reason_for_failure,
+                             "human_comment" : human_comment})
+
+    print("model response : ", response)
+
+    # return response.model_dump()
+    return  Command(update={"updated_action_designator" : response,
+                            "messages" : [ToolMessage("Successfully updated state from tool", tool_call_id = tool_call_id)]})
+
+
+@tool(return_direct=True)
+def designator_updater_dump(action_designator: Union[*action_classes] | str = None,
+                       reason_for_failure: Union[*failure_reasons] | str = None,
+                       human_comment: str = None) -> dict:
+    """
+    Modifies the parameters of the action designator based on the reason for failure and human comment if provided
+    :param action_designator: Action designator to be modified
+    :param reason_for_failure: Reason for failure
+    :param human_comment: A human feedback or comment about the failure or his intention in string format
+    :return: Command object to update state with the modified action designator
+    """
+    tool_prompt_template = f"""
+        You are a helpful and detail-oriented assistant specialized in robotics action planning and correction.
+        Your task is to correct or modify a given action designator object based on a reported error reason and an optional human comment.
+
+        ## Objective
+        Analyze the provided `action_designator` (a structured object representing a robotic action), the `error_reason`
+        (a diagnostic explanation of why the action failed or is invalid), and a possible `human_comment`
+        (extra guidance or clarification from a human operator). Based on this information, perform **step-by-step reasoning**
+        and propose a **corrected version of the action_designator** that resolves the issue.
+
+        ## Inputs
+        - `action_designator`: A structured object with fields like action type, arm, object, grasp description, and robot state.
+        - `error_reason`: A description of the validation or execution error encountered.
+        - `human_comment`: (Optional) Natural language input from a human providing suggestions, hints, or additional context.
+
+        ## Output
+        A corrected or improved version of the original `action_designator` object that addresses the error.
+        If a fix is not possible due to insufficient context, suggest minimal, plausible modifications and add a note about what clarification is needed.
+
+        ## Reasoning Chain (Apply this step-by-step logic):
+        1. **Understand the action goal** from the action_type and its parameters.
+        2. **Analyze the `error_reason`** to identify what went wrong (e.g., missing fields, invalid values, planning issues).
+        3. **Parse the `human_comment`**, if any, for cues or corrections intended by the user.
+        4. **Identify incorrect, missing, or conflicting fields** in the original `action_designator`.
+        5. **Propose a corrected designator**, modifying only the necessary parts while preserving original intent.
+        6. **Explain each modification** made to enhance transparency (this can be included in comments or metadata if your system allows).
+
+        ## Style Notes
+        - Be conservative: modify only what is necessary.
+        - Be consistent with the domain schema (e.g., grasp types, arms, object identifiers).
+        - If multiple corrections are possible, prefer the most contextually plausible.
+        - Maintain syntactic and semantic integrity of the final action designator.
+
+        Begin by reasoning through the error and then output the corrected designator.
+
+        ---
+
+        Perform the task mentioned for the provided
+
+        action_designator :{action_designator}
+
+        reason_for_failure : {reason_for_failure}
+
+        human_comment : {human_comment}
+
+        ---
+
+        return the action designator with modified attribute values as per the failure
+    """
+    structured_ollama = None
+    tool_prompt = ChatPromptTemplate.from_template(tool_prompt_template)
+
+    if isinstance(reason_for_failure, ObjectNotGraspedErrorModel):
+        error_message = reason_for_failure.args[0]
+        print(f"Pick Up Error Message", error_message)
+    elif isinstance(reason_for_failure, ObjectStillInContactModel):
+        error_message = reason_for_failure.args[0]
+        print(f"Place Error Message", error_message)
+    elif isinstance(reason_for_failure, ObjectNotPlacedAtTargetLocationModel):
+        error_message = reason_for_failure.args
+        print(f"Place Error Message Another", error_message)
+    elif isinstance(reason_for_failure, str):
+        try:
+            failure_instance = eval(reason_for_failure)
+            failure_type = failure_instance.failure_type
+            failure_cls = next((cls for cls in failure_reasons if
+                               cls.__name__ == failure_type or getattr(cls, 'failure_type', None) == failure_type), None)
+            if failure_cls is None:
+                raise ValueError(f"Unknown failure_type: {failure_type}")
+            print("failure Class", failure_cls, type(failure_cls))
+            error_message = failure_instance.args[0]
+            print(f"Error Message {error_message}")
+        except:
+            print("invalid failure type")
+        # error_message = reason_for_failure
+        # print(f"Error Message", reason_for_failure)
+
+    if isinstance(action_designator, PickUpAction):
+        print("PickUpAction")
+        # print(action_designator.object_designator)
+        structured_ollama = ollama_llm.with_structured_output(PickUpAction, method="json_schema")
+    elif isinstance(action_designator, PlaceAction):
+        print("PlaceAction")
+    else:
+        try:
+            ad = eval(action_designator)
+            # parsed_ad = json.loads(action_designator)
+            action_type = ad.action_type
+            action_cls = next((cls for cls in action_classes if
+                               cls.__name__ == action_type or getattr(cls, 'action_type', None) == action_type), None)
+            if action_cls is None:
+                raise ValueError(f"Unknown action_type: {action_type}")
+            print("action Class", action_cls, type(action_cls))
+            structured_ollama = ollama_llm.with_structured_output(action_cls, method="json_schema")
+        except:
+            print("Unknown Action Designator")
+
+    ## ToDo invoke llm here
+
+    chain = tool_prompt | structured_ollama
+
+    response = chain.invoke({"action_designator": action_designator, "reason_for_failure": reason_for_failure,
+                             "human_comment": human_comment})
+
+    print("model response : ", response)
+    print(type(response))
+
+    return response.model_dump()
+
+# Create the agent
+# pycram_agent = create_agent(llm= ollama_llm, tools=[], agent_sys_prompt="")
+
+
+agent_prompt = """
+    You are a smart action planning agent with sole responsibility of always making tool call to update or modify the parameters of action designator
+    which are/may be failed due to the reason given as input or by human comment or both.
+
+    You have access to one specialized tool:
+    ---
+    ### 🔧 TOOL: `designator_updater(tool_call_id: Annotated[str, InjectedToolCallId], state: Annotated[CustomState, InjectedState]) -> Command`
+
+    - This tool parameters that are populated dynamically during run time are:
+        1.  tool_call_id: tool_call_id populated dynamically at run time
+        2.  state: graph state populated dynamically at run time
+
+    Requirements:
+    Always invoke the tool
+    ---
+
+"""
+update_agent = create_react_agent(model=ollama_llm, tools=[designator_updater], prompt=SystemMessage(content=agent_prompt),
+                                  state_schema=CustomState)
