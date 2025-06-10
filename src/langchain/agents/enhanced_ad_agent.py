@@ -9,7 +9,50 @@ from langchain_core.prompts import ChatPromptTemplate
 import re
 from pydantic import BaseModel
 from pathlib import Path
+from src.resources.pycram.cram_models import *
 
+action_classes = [Adding,
+    Arranging,
+    Baking,
+    Shutting,
+    Cooking,
+    Cooling,
+    Cutting,
+    Evaluating,
+    Filling,
+    Flavouring,
+    Flipping,
+    PickingUp,
+    Lifting,
+    Mixing,
+    Neutralizing,
+    Opening,
+    OpeningADoor,
+    OperatingATap,
+    Pipetting,
+    Pouring,
+    Preheating,
+    Pressing,
+    Pulling,
+    Putting,
+    Removing,
+    Rolling,
+    Serving,
+    Shaking,
+    Spooning,
+    Spreading,
+    Sprinkling,
+    Starting,
+    Stopping,
+    Stirring,
+    Storing,
+    Taking,
+    Turning,
+    TurningOnElectricalDevice,
+    Unscrewing,
+    UsingMeasuringCup,
+    UsingSpiceJar,
+    Waiting]
 
 def read_json_from_file(filename):
     """Read JSON data from a file"""
@@ -61,15 +104,6 @@ class ADDesignator(BaseModel):
     object : Optional[ADObject] = None
     tool : Optional[ADTool] = None
     location : Optional[ADLocation] = None
-
-class Pouring(BaseModel):
-    action_core : str = "Pouring"
-    stuff: str
-    goal : str
-    action_verb : str
-    unit : Optional[str] = None
-    amount : Optional[str] = None
-
 
 
 mod1_template = """
@@ -465,10 +499,18 @@ def universal(state : ADState):
     cram_plan = json_data[action_core]['cram_plan']
     print("cram_plan", cram_plan)
 
+    action_cls = next(
+        (cls for cls in action_classes if cls.__name__ == action_core or
+         getattr(cls, 'action_core', None) == action_core),
+        None
+    )
+    if action_cls is None:
+        raise ValueError(f"Unknown action_core: {action_core}")
+
     uni_prompt = ChatPromptTemplate.from_template(uni_template)
     cram_prompt = ChatPromptTemplate.from_template(cram_template)
 
-    chain = uni_prompt | ollama_llm.with_structured_output(Pouring, method="json_schema")
+    chain = uni_prompt | ollama_llm.with_structured_output(action_cls, method="json_schema")
 
     response = chain.invoke({'instruction': instruction, 'action_core': action_core, 'required_attributes': str(required_fields)})
 
