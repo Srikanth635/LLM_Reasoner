@@ -121,14 +121,21 @@ class Phase(BaseModel):
 # Corrected TaskModel
 class TaskModel(BaseModel):
     task: str = Field(description="Label for the task (e.g., PourWaterFromBottle)")
-    pre_motion_phase: FullPhase
+    # pre_motion_phase: FullPhase
     initiation_phase: InitialPhase
     execution_phase: Phase # Field name 'execution_phase' is different from type 'Phase'
     interaction_phase: Phase # Field name 'interaction_phase' is different from type 'Phase'
     termination_phase: Phase # Field name 'termination_phase' is different from type 'Phase'
     post_motion_phase: Phase # Field name 'post_motion_phase' is different from type 'Phase'
 
-
+class FinalModel(BaseModel):
+    task: str = Field(description="Label for the task (e.g., PourWaterFromBottle)")
+    pre_motion_phase: FullPhase
+    initiation_phase: InitialPhase
+    execution_phase: Phase # Field name 'execution_phase' is different from type 'Phase'
+    interaction_phase: Phase # Field name 'interaction_phase' is different from type 'Phase'
+    termination_phase: Phase # Field name 'termination_phase' is different from type 'Phase'
+    post_motion_phase: Phase # Field name 'post_motion_phase' is different from type 'Phase'
 
 
 ###############################Structured Output flanagan END#########################################################
@@ -377,9 +384,420 @@ flanagan_prompt_template = """
 
 flanagan_prompt = ChatPromptTemplate.from_template(flanagan_prompt_template)
 
+flanagan_premotion_prompt_template = """
+    You are a specialized AI agent, an expert in Robotic Task Initialization. Your sole purpose is to take semi-structured 
+    data about a robotic task and transform it into the complete pre_motion_phase of a Flanagan-like task model. 
+    You are a data-to-schema transformer.
+
+    *Your Mission:*
+    
+    You will receive contextual information about a task. Your job is to use this information to generate a single, valid 
+    JSON object with one top-level key: pre_motion_phase. This object must contain three sub-sections: goal_definition, predictive_model, and motion_planning.
+    
+    *Input Inputs You Will Receive:*
+    
+    - Enriched Attributes JSON: A JSON object containing the action's attributes and their enriched _props dictionaries (e.g., obj_to_be_cut, obj_to_be_cut_props).
+     This is your primary source of truth.
+    - Action Core: The primary classified action (e.g., "Cutting", "Pouring").
+    - Original Instruction: The initial high-level user command, for overall context.
+    
+    ### Mapping and Generation Instructions ###
+    You must meticulously follow these rules to construct the JSON output.
+    
+    1. Constructing goal_definition:
+        This section defines the "what" of the task.
+    
+        - task (string): Create a concise task summary. Combine the Action Core with the primary object's name (e.g., "Cutting apple", "Pouring water").
+        - semantic_annotation (string): Use the Action Core input to create a TaskClass annotation. (e.g., if Action Core is "Cutting", 
+        this should be "TaskClass:Manipulation.Cutting").
+        - object, target, tool (ObjectModel/ToolModel):
+            - Identify the primary object, target, and tool from the keys in the Enriched Attributes JSON (e.g., obj_to_be_cut, goal, utensil).
+            - For each of these, create a JSON object with the following structure:
+                - id (string): Generate a descriptive, lowercase ID from the object's name (e.g., "apple" becomes "apple_01", "knife" becomes "knife_main").
+                - type (string): Use "PhysicalArtifact" for objects/targets and "Gripper" or "Tool" for tools, unless otherwise specified.
+                - properties (object): Directly map the corresponding _props dictionary from the input JSON here. For example, the contents of 
+                obj_to_be_cut_props become the contents of the properties object.
+                - expected_end_state (object): (For object and target only). Define a simple, logical end state based on the task. For a 
+                "Cutting" task, the object's end state might be "conditions": "is_cut": true. For a "Pouring" task, the bottle's 
+                end state is "conditions": "is_empty": true.
+            - Null Handling: If a target or tool is not present in the input data, omit its key entirely from the goal_definition.
+            
+    2. Constructing predictive_model and motion_planning:
+        These sections define the "how." For this task, you should use sensible, generic defaults unless the input data provides specific hints.
+        
+        - predictive_model:
+            - expected_trajectory: Use a generic but descriptive string like "StandardApproachPath" or "LiftingTrajectory".
+            - expected_force: Provide reasonable default float values, e.g.,  "initial_N": 1.5, "resistance_range_N": [1.0, 2.0] .
+            - confidence_level: Use a high default like 0.95.
+            - affordance_model: Infer simple boolean affordances, e.g.,  "tool_affords_cutting": true, "object_affords_being_cut": true .
+        - motion_planning:
+            - planned_trajectory: Use a default like "GenericPathToTarget".
+            - obstacle_avoidance: Use a default like "ReactiveSensorBased".
+            - energy_efficiency: Use a default like "Balanced".
+        
+    ### Output Specification ###
+    - Your response MUST be a single, valid JSON object.
+    - The only top-level key must be pre_motion_phase.
+    - Do not include any other keys, text, explanations, or markdown formatting.
+    
+    Example
+    Input Action Core: Cutting
+    
+    Input Enriched Attributes JSON:
+    
+    JSON
+    
+    
+      "obj_to_be_cut": "apple",
+      "obj_to_be_cut_props": 
+        "color": "red",
+        "shape": "round",
+        "texture": "smooth"
+      ,
+      "utensil": "knife",
+      "utensil_props": 
+        "material": "steel",
+        "edge": "sharp"
+      
+    
+    Your Output:
+    
+    JSON
+    
+    
+      "pre_motion_phase": 
+        "goal_definition": 
+          "task": "Cutting apple",
+          "semantic_annotation": "TaskClass:Manipulation.Cutting",
+          "object": 
+            "id": "apple_01",
+            "type": "PhysicalArtifact",
+            "properties": 
+              "color": "red",
+              "shape": "round",
+              "texture": "smooth"
+            ,
+            "expected_end_state": 
+              "conditions": 
+                "is_cut": true
+              
+            
+          ,
+          "tool": 
+            "id": "knife_main",
+            "type": "Tool",
+            "properties": 
+              "material": "steel",
+              "edge": "sharp"
+            
+          
+        ,
+        "predictive_model": 
+          "expected_trajectory": "StandardCuttingApproach",
+          "expected_force": 
+            "initial_N": 2.0,
+            "resistance_range_N": [
+              1.5,
+              3.0
+            ]
+          ,
+          "confidence_level": 0.95,
+          "affordance_model": 
+            "tool_affords_cutting": true,
+            "object_affords_being_cut": true
+          
+        ,
+        "motion_planning": 
+          "planned_trajectory": "DirectPathToObject",
+          "obstacle_avoidance": "ReactiveSensorBased",
+          "energy_efficiency": "Balanced"
+        
+      
+    ---
+    
+    Now perform the task for given action, enriched_attributes and instruction:
+    
+    Action Core: {action_core}
+    Enriched Attributes: {enriched_attributes}
+    Original Instruction: {instruction}
+    
+"""
+flanagan_premotion_prompt = ChatPromptTemplate.from_template(flanagan_premotion_prompt_template)
+
+flanagan_phaser_prompt_template = """
+    You are an expert AI in Robotic Motion Phase Decomposition. Your sole purpose is to generate the sequential motion phases of a
+    robotic task (Initiation through PostMotion) by decomposing a task's goal into a logical series of steps, based on a wealth of provided context.
+
+    *Your Mission:*
+    
+    You will receive a comprehensive set of inputs that define a task's goal and low-level structure. Your job is to use this information
+    to reason about the physical steps required to perform the action and to output a valid JSON object describing the five sequential motion phases.
+    
+    ### Inputs You Will Receive: ###
+    
+    - Pre-Motion Phase JSON: The detailed definition of the task's goal, including the specific ids and properties of the object,
+        target, and tool. This is your primary source of truth for "what" is being manipulated.
+    - CRAM Plan: A low-level symbolic plan that provides a strong hint about the fundamental sequence of actions.
+    - Action Core: The primary classified action (e.g., "Cutting", "Placing").
+    - Original Instruction: The initial high-level user command, for overall context.
+    
+    Core Logic and Generation Instructions
+    To construct the output, you must synthesize information from all inputs and follow this logic:
+    
+    1. Use the CRAM Plan as a Scaffold:
+        The CRAM Plan provides an excellent blueprint for your SubPhases. Analyze its action types (e.g., grab-object, lift-object, 
+        put-object) and use them to define the names and sequence of your SubPhases within the appropriate main phases.
+    
+    2. Reference the Pre-Motion Data:
+        Constantly refer to the Pre-Motion Phase JSON to get the correct ids for the object, tool, and target. These IDs are essential
+        for creating meaningful goalState conditions. For example, a goal state should look like: "goalState":  "ObjectState":  "apple_01.IsHeld": true  .
+    
+    3. Logical Phase Breakdown:
+        Structure your decomposition into the five phases. A typical task flow is as follows:
+    
+        - initiation_phase: The actions required to begin the task, such as moving the robot's arm to the object (Reach), 
+        preparing the gripper (PreGrasp), and securing the object (Grasp).
+        - execution_phase: The actions of moving the secured object to the point of interaction. This could involve Lift, Transport, and Align sub-phases.
+        - interaction_phase: The main event where the tool interacts with the object or target. This is the core of the task, such as the Cut, Pour, or Press sub-phase.
+        - termination_phase: The actions to conclude the interaction, such as retracting the tool (Retract), placing the object (Place), and releasing it (Release).
+        - post_motion_phase: Final clean-up actions, like returning the arm to a neutral "home" position (ReturnToHome) and 
+        updating the internal world model (UpdateKnowledgeBase).
+
+    4. Define goalState and SymbolicGoals:
+
+        - The goalState for each SubPhase must define the specific, verifiable condition that marks its completion.
+        - The SymbolicGoals for each main phase should list the high-level outcomes achieved during that phase.
+    
+    ### Output Specification ###
+    - Your response MUST be a single, valid JSON object.
+    - The JSON object should contain only the five sequential phase keys: initiation_phase, execution_phase, interaction_phase, termination_phase, and post_motion_phase.
+    - Do not include any other keys, text, explanations, or markdown formatting outside of the JSON structure.
+    
+    ### Example: ###
+    Input Action Core: Cutting
+    
+    Input CRAM Plan: (perform (an action (type cut-object) (an object (type apple)) (utensil (an object (type knife)))))
+    
+    Input Pre-Motion Phase JSON:
+    
+    JSON
+    
+    
+      "pre_motion_phase": 
+        "goal_definition": 
+          "task": "Cutting apple",
+          "object":  "id": "apple_01", "properties":  "color": "red" ,
+          "tool":  "id": "knife_main", "properties":  "edge": "sharp" 
+        
+      
+    
+    Your Output:
+    
+    JSON
+    
+    
+      "initiation_phase": 
+        "name": "Initiation",
+        "SubPhases": [
+          
+            "name": "ReachForTool",
+            "description": "Move end-effector towards the knife.",
+            "goalState":  "ToolState":  "knife_main.IsInRange": true 
+          ,
+          
+            "name": "GraspTool",
+            "description": "Grasp the knife using the gripper.",
+            "goalState":  "ToolState":  "knife_main.IsHeld": true 
+          
+        ],
+        "SymbolicGoals": [  "goal": "ToolAcquired"  ],
+        "SemanticAnnotation": "PhaseClass:Initiation"
+      ,
+      "execution_phase": 
+        "name": "Execution",
+        "SubPhases": [
+          
+            "name": "ApproachObjectWithTool",
+            "description": "Move the knife into position above the apple.",
+            "goalState":  "ObjectState":  "apple_01.IsInRange": true 
+          ,
+          
+            "name": "AlignToolForCut",
+            "description": "Align the knife edge with the apple surface.",
+            "goalState":  "ToolState":  "knife_main.IsAligned": true 
+          
+        ],
+        "SymbolicGoals": [  "goal": "ReadyToInteract"  ],
+        "SemanticAnnotation": "PhaseClass:Execution"
+      ,
+      "interaction_phase": 
+        "name": "Interaction",
+        "SubPhases": [
+          
+            "name": "PerformCut",
+            "description": "Apply downward force with the knife to slice the apple.",
+            "goalState":  "ObjectState":  "apple_01.IsCut": true  
+          
+        ],
+        "SymbolicGoals": [  "goal": "ObjectStateModified"  ],
+        "SemanticAnnotation": "PhaseClass:Interaction"
+      ,
+      "termination_phase": 
+        "name": "Termination",
+        "SubPhases": [
+          
+            "name": "RetractTool",
+            "description": "Lift the knife away from the cut apple.",
+            "goalState":  "ToolState":  "knife_main.IsClear": true  
+          ,
+          
+            "name": "ReleaseTool",
+            "description": "Place the knife back in a safe location and release grip.",
+            "goalState":  "ToolState": "knife_main.IsHeld": false  
+          
+        ],
+        "SymbolicGoals": [  "goal": "InteractionComplete"  ],
+        "SemanticAnnotation": "PhaseClass:Termination"
+      ,
+      "post_motion_phase": 
+        "name": "PostMotion",
+        "SubPhases": [
+          
+            "name": "ReturnToHome",
+            "description": "Move the end-effector to a neutral home position.",
+            "goalState":  "RobotState":  "arm.IsAtHome": true  
+          ,
+          
+            "name": "UpdateWorldModel",
+            "description": "Update the knowledge base with the new state of the apple.",
+            "goalState":  "SystemState":  "KnowledgeBase.IsUpdated": true  
+          
+        ],
+        "SymbolicGoals": [  "goal": "TaskComplete"  ],
+        "SemanticAnnotation": "PhaseClass:PostMotion"
+      
+    ---
+    
+    Now, perform the task for the given premotion_phase info, CRAM plan, action core and instruction:
+    
+    Pre-Motion Phase JSON: {premotion_phase}
+    CRAM Plan: {cram_plan}
+    Action Core: {action_core}
+    Original Instruction: {instruction}
+    
+"""
+flanagan_phaser_prompt = ChatPromptTemplate.from_template(flanagan_phaser_prompt_template)
+
+flanagan_combiner_prompt_template = """
+    You are a simple, hyper-focused JSON Manipulation Utility. Your only function is to combine two separate JSON objects into a single,
+    unified JSON object. You do not analyze, interpret, or change the content in any way.
+    
+    
+    *Your Mission:*
+    
+    You will be given two JSON objects, JSON_Object_A and JSON_Object_B. You must merge them according to the rules below.
+    
+    ### Execution Rules: ###
+    
+    - Combine Keys: Take all the top-level keys from JSON_Object_A and all the top-level keys from JSON_Object_B and place them together in a new, single JSON object.
+    - Add task Key: Add a new top-level key named task. Its value should be a concise summary of the task, which you can find in JSON_Object_A at the path pre_motion_phase.goal_definition.task.
+    - Do Not Modify: You must not alter, add, or remove any content or keys within the original objects. Your only job is to merge them at the top level.
+    - Ensure Validity: The final output must be a single, syntactically perfect JSON object.
+    
+    ### Output Specification ###
+    - Your response MUST be only the final, merged JSON object.
+    - Do not include any text, explanations, or markdown formatting like ```json.
+    
+    ### Example ###
+    Input JSON_Object_A:
+    
+    JSON
+    
+    
+      "pre_motion_phase": 
+        "goal_definition": 
+          "task": "Cutting apple",
+          "object":  "id": "apple_01" 
+        
+      
+    
+    Input JSON_Object_B:
+    
+    JSON
+    
+    
+      "initiation_phase": 
+        "name": "Initiation",
+        "SubPhases": [  "name": "GraspTool"  ]
+      ,
+      "execution_phase": 
+        "name": "Execution"
+      
+    
+    Your Output:
+    
+    JSON
+    
+    
+      "task": "Cutting apple",
+      "pre_motion_phase": 
+        "goal_definition": 
+          "task": "Cutting apple",
+          "object":  "id": "apple_01" 
+        
+      ,
+      "initiation_phase": 
+        "name": "Initiation",
+        "SubPhases": [  "name": "GraspTool"  ]
+      ,
+      "execution_phase": 
+        "name": "Execution"
+      
+    ---
+    
+    Now, perform the task of merging on given data,
+    
+    JSON_Object_A: {premotion_phase}
+    JSON_Object_B: {phaser}
+"""
+
+flanagan_combiner_prompt = ChatPromptTemplate.from_template(flanagan_combiner_prompt_template)
+
 # llm_fn = ChatOpenAI(model="gpt-4o-mini")
 structured_llm_fn = llm.with_structured_output(TaskModel)
 structured_ollama_llm_fl = ollama_llm.with_structured_output(TaskModel, method="json_schema")
+
+
+
+def flanagan_premotion_tool(instruction: str, action_core : str, enriched_json_attributes : str):
+    """
+    Generate a structured Flanagan-style task premotion phase model representation from a natural language instruction, action core
+    and enriched attributes information
+    """
+    print("INSIDE flanagan PREMOTION TOOL")
+    chain = flanagan_premotion_prompt | ollama_llm.with_structured_output(FullPhase, method="json_schema")
+    response = chain.invoke({"instruction": instruction, "action_core" : action_core, "enriched_attributes" : enriched_json_attributes})
+    print(response)
+
+def flanagan_phaser_tool(premotion_phase :str, cram_plan:str, action_core : str, instruction : str):
+    """
+    Generate a structured Flanagan-style task phase model representation from a natural language instruction, action core,
+    enriched attributes information and low level cram action designator
+    """
+    print("INSIDE flanagan PHASER TOOL")
+    chain2 = flanagan_phaser_prompt | ollama_llm.with_structured_output(TaskModel, method="json_schema")
+    response2 = chain2.invoke({"premotion_phase": premotion_phase, "cram_plan" : cram_plan, "action_core" : action_core, "instruction" : instruction})
+    print(response2)
+
+def flanagan_repr(premotion_phase:str, phaser:str):
+    """
+    Generate a structured full Flanagan-style task model representation from a predefined premotion phase and remaining
+    sequential phase information.
+    """
+    print("INSIDE flanagan REPR")
+    chain3 = flanagan_combiner_prompt | ollama_llm.with_structured_output(FinalModel, method="json_schema")
+    response3 = chain3.invoke({"premotion_phase": premotion_phase, "phaser" : phaser})
+    print(response3)
 
 
 # Agent Specific Tools
@@ -413,7 +831,7 @@ flanagan_tool_direct_return = Tool.from_function(
     func=flanagan_tool,
     name= "flanagan_tool",
     description= "flanagan representation of the input string with direct return tool output",
-    return_direct=True  # ✅ This ensures the agent returns it as-is
+    return_direct=True
 )
 
 
@@ -446,7 +864,7 @@ if __name__ == "__main__":
     # test_flanagan()
     # print(flanagan_tool("pick up the bottle from the sink"))
     # print(fnr[0])
-    flanagan_agent.invoke({'messages' : [HumanMessage(content='pick up the bottle from the sink')]})
+    # flanagan_agent.invoke({'messages' : [HumanMessage(content='pick up the bottle from the sink')]})
 
     # @tool
     # def flans_tool(instruction: str):
@@ -468,3 +886,50 @@ if __name__ == "__main__":
     #     json_response = response.model_dump_json(indent=2, by_alias=True)
     #     # return "Srikanth"
     #     return response
+
+    instruction = "pick up the cooking pan from the wooden drawer"
+    action_core = "PickingUp"
+    enriched_json_attributes = """
+         {  "obj_to_be_grabbed": "cooking pan",  "obj_to_be_grabbed_props": {    "material": "metal",    "shape": "rectangular",    "handle": "present"  },  "action_verb": "pick up",  "location": "wooden drawer",  "location_props": {    "material": "wood",   "shape": "rectangular" }}
+    """
+    cram_plan_ex =  '(perform (an action (type grab-object) (an object (type cooking pan) (material metal) (shape rectangular) (size medium)) (source (a location (on wooden drawer) (material wood) (shape rectangular) (type drawer)))))'
+
+    premotion_phase_ex = """
+        goal_definition=GoalDefinition(task='PickingUp cooking pan', semantic_annotation='TaskClass:Manipulation.PickingUp', 
+        object=ObjectModel(id='cooking_pan_01', type='PhysicalArtifact', properties=ObjectProperties(size=None, texture=None, 
+        material='metal', fill_level=None, contents=None, hardness=None, friction_coefficient=None, elasticity=None, strain_limit=1000000000000000.0), 
+        expected_end_state=GoalState(conditions={'is_grabbed': {'is_grabbed': True}})), target=None, tool=ToolModel(id='gripper_main', 
+        type='Gripper', properties={})) predictive_model=PredictiveModel(expected_trajectory='StandardApproachPath', 
+        expected_force={'initial_N': 1.5, 'resistance_range_N': [1.0, 2.0]}, confidence_level=0.95, affordance_model=
+        {'tool_affords_grabbing': True, 'object_affords_being_grabbed': True}) motion_planning=MotionPlanning(planned_trajectory='GenericPathToTarget', 
+        obstacle_avoidance='ReactiveSensorBased', energy_efficiency='Balanced')
+    """
+
+    phaser_ex = """
+        task='PickingUp cooking pan' initiation_phase=InitialPhase(initial_state=InitialState(robot_pose={'arm': [0.4, 0.2, 0.5], 
+        'gripper': [0.5, 0.5, 0.5]}, tool_position=[0.3, 0.2, 0.4], target_object_position=[0.6, 0.3, 0.4]), motion_initialization=MotionInitialization
+        (joint_activation={'arm': 0.4, 'gripper': 0.3}, velocity_profile='slow', motion_priming={'gripper_state': False, 'gripper_position': False}), 
+        SubPhases=[SubPhase(name='ReachForObject', description='Move end-effector towards the cooking pan.', goalState=[GoalState(conditions={'ObjectState': 
+        {'cooking_pan_01.IsInRange': True}})]), SubPhase(name='PreGrasp', description='Prepare the gripper to grasp the cooking pan.', 
+        goalState=[GoalState(conditions={'GripperState': {'gripper_main.IsOpen': False}})]), SubPhase(name='GraspObject', 
+        description='Secure the grip on the cooking pan.', goalState=[GoalState(conditions={'ObjectState': {'cooking_pan_01.IsGrabbed': True}})])], 
+        SymbolicGoals=[GoalState(conditions={'goal': {'is_grabbed': True}})], SemanticAnnotation='PhaseClass:Initiation') 
+        execution_phase=Phase(SubPhases=[SubPhase(name='LiftObject', description='Lift the cooking pan from the drawer.', 
+        goalState=[GoalState(conditions={'ObjectState': {'cooking_pan_01.IsLifted': True}})]), SubPhase(name='Transport', 
+        description='Move the cooking pan to a stable position.', goalState=[GoalState(conditions={'ObjectState': {'cooking_pan_01.IsStable': True}})])], 
+        SymbolicGoals=[GoalState(conditions={'goal': {'is_lifted': True}})], SemanticAnnotation='PhaseClass:Execution') 
+        interaction_phase=Phase(SubPhases=[SubPhase(name='ConfirmGrasp', description='Confirm that the cooking pan is securely grasped.', 
+        goalState=[GoalState(conditions={'ObjectState': {'cooking_pan_01.IsSecure': True}})])], 
+        SymbolicGoals=[GoalState(conditions={'goal': {'is_secure': True}})], SemanticAnnotation='PhaseClass:Interaction') 
+        termination_phase=Phase(SubPhases=[SubPhase(name='ReleaseObject', description='Release the cooking pan from the gripper.', 
+        goalState=[GoalState(conditions={'ObjectState': {'cooking_pan_01.IsReleased': True}})]), SubPhase(name='RetractGripper', 
+        description='Move the gripper to a safe position.', goalState=[GoalState(conditions={'GripperState': {'gripper_main.IsOpen': True}})])], 
+        SymbolicGoals=[GoalState(conditions={'goal': {'is_released': True}})], SemanticAnnotation='PhaseClass:Termination') 
+        post_motion_phase=Phase(SubPhases=[SubPhase(name='ReturnToHome', description='Return the end-effector to the home position.', 
+        goalState=[GoalState(conditions={'RobotState': {'arm.IsAtHome': True}})]), SubPhase(name='UpdateWorldModel', 
+        description='Update the world model to reflect the new state of the cooking pan.', goalState=[GoalState(conditions={'SystemState': 
+        {'KnowledgeBase.IsUpdated': True}})])], SymbolicGoals=[GoalState(conditions={'goal': {'task_complete': True}})], SemanticAnnotation='PhaseClass:PostMotion')
+    """
+    # flanagan_premotion_tool(instruction=instruction, action_core=action_core, enriched_json_attributes=enriched_json_attributes)
+    # flanagan_phaser_tool(premotion_phase=premotion_phase_ex, cram_plan=cram_plan_ex, action_core=action_core, instruction=instruction)
+    flanagan_repr(premotion_phase=premotion_phase_ex, phaser=phaser_ex)

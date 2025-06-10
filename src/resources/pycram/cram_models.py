@@ -1,5 +1,10 @@
-from pydantic import BaseModel
+
+
+from pydantic import BaseModel, Field
 from typing import Optional, List
+
+from scripts.regsetup import description
+
 
 class Adding(BaseModel):
     """A Pydantic model for the 'Adding' action."""
@@ -45,6 +50,8 @@ class Cutting(BaseModel):
     action_verb: str
     amount: Optional[float] = None
     unit: Optional[str] = None
+    cram_plan: Optional[str] = None
+
 
 class Evaluating(BaseModel):
     """A Pydantic model for the 'Evaluating' action."""
@@ -75,11 +82,13 @@ class PickingUp(BaseModel):
     obj_to_be_grabbed: str
     action_verb: str
     location: Optional[str] = None
+    cram_plan: Optional[str] = None
 
 class Lifting(BaseModel):
     """A Pydantic model for the 'Lifting' action."""
     obj_to_be_lifted: str
     action_verb: str
+    cram_plan: Optional[str] = None
 
 class Mixing(BaseModel):
     """A Pydantic model for the 'Mixing' action."""
@@ -103,6 +112,7 @@ class OpeningADoor(BaseModel):
     """A Pydantic model for the 'OpeningADoor' action."""
     obj_to_be_opened: str
     action_verb: str
+    cram_plan: Optional[str] = None
 
 class OperatingATap(BaseModel):
     """A Pydantic model for the 'OperatingATap' action."""
@@ -111,6 +121,7 @@ class OperatingATap(BaseModel):
     action_verb: str
     amount: Optional[float] = None
     unit: Optional[str] = None
+    cram_plan: Optional[str] = None
 
 class Pipetting(BaseModel):
     """A Pydantic model for the 'Pipetting' action."""
@@ -119,14 +130,16 @@ class Pipetting(BaseModel):
     action_verb: str
     amount: Optional[float] = None
     unit: Optional[str] = None
+    cram_plan: Optional[str] = None
 
 class Pouring(BaseModel):
     """A Pydantic model for the 'Pouring' action."""
     stuff: str
     goal: str
     action_verb: str
-    unit: Optional[str] = None
-    amount: Optional[float] = None
+    unit: Optional[str] = Field(description="Units (liters, drops, ounces etc.,)", default=None)
+    amount: Optional[float] = Field(description="Amount of quantity to pour ", default=None)
+    cram_plan: Optional[str] = None
 
 class Preheating(BaseModel):
     """A Pydantic model for the 'Preheating' action."""
@@ -140,28 +153,33 @@ class Pressing(BaseModel):
     obj_to_be_pressed: str
     action_verb: str
     location: Optional[str] = None
+    cram_plan: Optional[str] = None
 
 class Pulling(BaseModel):
     """A Pydantic model for the 'Pulling' action."""
     obj_to_be_pulled: str
     action_verb: str
+    cram_plan: Optional[str] = None
 
 class Putting(BaseModel):
     """A Pydantic model for the 'Putting' action."""
     obj_to_be_put: str
     action_verb: str
     location: Optional[str] = None
+    cram_plan: Optional[str] = None
 
 class Removing(BaseModel):
     """A Pydantic model for the 'Removing' action."""
     action_verb: str
     location: Optional[str] = None
     obj_to_be_removed: Optional[str] = None
+    cram_plan: Optional[str] = None
 
 class Rolling(BaseModel):
     """A Pydantic model for the 'Rolling' action."""
     theme: str
     action_verb: str
+    cram_plan: Optional[str] = None
 
 class Serving(BaseModel):
     """A Pydantic model for the 'Serving' action."""
@@ -174,24 +192,28 @@ class Shaking(BaseModel):
     action_verb: str
     unit: Optional[str] = None
     amount: Optional[float] = None
+    cram_plan: Optional[str] = None
 
 class Spooning(BaseModel):
     """A Pydantic model for the 'Spooning' action."""
     substance: str
     goal: str
     action_verb: str
+    cram_plan: Optional[str] = None
 
 class Spreading(BaseModel):
     """A Pydantic model for the 'Spreading' action."""
     substance: str
     goal: str
     action_verb: str
+    cram_plan: Optional[str] = None
 
 class Sprinkling(BaseModel):
     """A Pydantic model for the 'Sprinkling' action."""
     substance: str
     goal: str
     action_verb: str
+    cram_plan: Optional[str] = None
 
 class Starting(BaseModel):
     """A Pydantic model for the 'Starting' action."""
@@ -207,6 +229,7 @@ class Stirring(BaseModel):
     """A Pydantic model for the 'Stirring' action."""
     action_verb: str
     content: List[str]
+    cram_plan: Optional[str] = None
 
 class Storing(BaseModel):
     """A Pydantic model for the 'Storing' action."""
@@ -219,11 +242,13 @@ class Taking(BaseModel):
     obj_to_be_taken: str
     action_verb: str
     location: Optional[str] = None
+    cram_plan: Optional[str] = None
 
 class Turning(BaseModel):
     """A Pydantic model for the 'Turning' action."""
     obj_to_be_turned: str
     action_verb: str
+    cram_plan: Optional[str] = None
 
 class TurningOnElectricalDevice(BaseModel):
     """A Pydantic model for the 'TurningOnElectricalDevice' action."""
@@ -234,6 +259,7 @@ class Unscrewing(BaseModel):
     """A Pydantic model for the 'Unscrewing' action."""
     obj_to_be_unscrewed: str
     action_verb: str
+    cram_plan: Optional[str] = None
 
 class UsingMeasuringCup(BaseModel):
     """A Pydantic model for the 'UsingMeasuringCup' action."""
@@ -242,15 +268,18 @@ class UsingMeasuringCup(BaseModel):
     action_verb: str
     amount: Optional[float] = None
     unit: Optional[str] = None
+    cram_plan: Optional[str] = None
 
 class UsingSpiceJar(BaseModel):
     """A Pydantic model for the 'UsingSpiceJar' action."""
     content: str
     goal: str
     action_verb: str
+    cram_plan: Optional[str] = None
 
 class Waiting(BaseModel):
     """A Pydantic model for the 'Waiting' action."""
     unit: Optional[str] = None
     action_verb: Optional[str] = None
     amount: Optional[float] = None
+    cram_plan: Optional[str] = None
