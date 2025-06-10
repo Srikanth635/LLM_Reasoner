@@ -1,0 +1,201 @@
+{
+  "Adding": {
+    "action_core": "Adding",
+    "action_roles": ["theme", "goal", "action_verb", "unit", "amount"],
+    "required_action_roles": ["theme", "goal", "action_verb"]
+  },
+  "Arranging": {
+    "action_core": "Arranging",
+    "action_roles": ["action_verb", "obj_to_be_arranged"]
+  },
+  "Baking": {
+    "action_core": "Baking",
+    "action_roles": ["theme", "action_verb"]
+  },
+  "Shutting": {
+    "action_core": "Shutting",
+    "action_roles": ["obj_to_be_shut", "action_verb", "utensil"]
+  },
+  "Cooking": {
+    "action_core": "Cooking",
+    "action_roles": ["obj_to_be_cooked", "action_verb"]
+  },
+  "Cooling": {
+    "action_core": "Cooling",
+    "action_roles": ["action_verb", "amount", "location", "obj_to_be_cooled", "unit"]
+  },
+  "Cutting": {
+    "action_core": "Cutting",
+    "action_roles": ["action_verb", "amount", "obj_to_be_cut", "unit", "utensil"],
+    "required_action_roles": ["obj_to_be_cut", "utensil", "action_verb"],
+    "cram_plan": "(perform (an action (type cut-object) (an object (type {obj_to_be_cut}){obj_to_be_cut_props})(count (unit {unit}){unit_props}(number {amount}){amount_props})(utensil (an object (type {utensil})))))"
+  },
+  "Evaluating": {
+    "action_core": "Evaluating",
+    "action_roles": ["obj_to_be_evaluated", "attribute", "action_verb"]
+  },
+  "Filling": {
+    "action_core": "Filling",
+    "action_roles": ["stuff", "goal", "action_verb"]
+  },
+  "Flavouring": {
+    "action_core": "Flavouring",
+    "action_roles": ["spice", "goal", "action_verb"]
+  },
+  "Flipping": {
+    "action_core": "Flipping",
+    "action_roles": ["obj_to_be_flipped", "action_verb", "utensil"]
+  },
+  "PickingUp": {
+    "action_core": "PickingUp",
+    "action_roles": ["obj_to_be_grabbed", "action_verb", "location"],
+    "required_action_roles": ["obj_to_be_grabbed", "action_verb"],
+    "cram_plan": "(perform (an action (type grab-object) (an object (type {obj_to_be_grabbed}){obj_to_be_grabbed_props}) (source (a location (on {location}){location_props}))))"
+  },
+  "Lifting": {
+    "action_core": "Lifting",
+    "action_roles": ["obj_to_be_lifted", "action_verb"],
+    "cram_plan": "(perform (an action (type lift-object) (an object (type {obj_to_be_lifted}){obj_to_be_lifted_props})))"
+  },
+  "Mixing": {
+    "action_core": "Mixing",
+    "action_roles": ["content", "action_verb"]
+  },
+  "Neutralizing": {
+    "action_core": "Neutralizing",
+    "action_roles": ["neutralizee", "neutralizer", "action_verb", "amount", "unit"],
+    "required_action_roles": ["neutralizee", "neutralizer", "action_verb"]
+  },
+  "Opening": {
+    "action_core": "Opening",
+    "action_roles": ["obj_to_be_opened", "action_verb"]
+  },
+  "OpeningADoor": {
+    "action_core": "OpeningADoor",
+    "action_roles": ["obj_to_be_opened", "action_verb"],
+    "cram_plan": "(perform (an action (type open-door) (a location (on {obj_to_be_opened}){obj_to_be_opened_props})))"
+  },
+  "OperatingATap": {
+    "action_core": "OperatingATap",
+    "action_roles": ["liquid", "goal", "action_verb", "amount", "unit"],
+    "cram_plan": "(perform (an action (type operate-tap) (source (an object (type faucet.n.01) (contains (a substance (type {liquid}){liquid_props}))))(count (unit {unit}){unit_props}(number {amount}){amount_props})(a location (in {goal}){goal_props})))"
+  },
+  "Pipetting": {
+    "action_core": "Pipetting",
+    "action_roles": ["content", "goal", "action_verb", "amount", "unit"],
+    "cram_plan": "(perform (an action (type use-pipette) (source (an object (type container.n.01) (contains (a substance (type {content}){content_props}))))(count (unit {unit}){unit_props}(number {amount}){amount_props}))(a location (in {goal}){goal_props}))"
+  },
+  "Pouring": {
+    "action_core": "Pouring",
+    "action_roles": ["stuff", "goal", "action_verb", "unit", "amount"],
+    "required_action_roles": ["stuff", "goal", "action_verb"],
+    "cram_plan": "(perform (an action (type pour-from-container) (source (an object (type container.n.01) (contains (a substance (type {stuff}){stuff_props}))))(count (unit {unit}){unit_props}(number {amount}){amount_props}))(a location (in {goal}){goal_props}))"
+  },
+  "Preheating": {
+    "action_core": "Preheating",
+    "action_roles": ["obj_to_be_heated", "temperature_unit", "temperature_setting", "action_verb"],
+    "required_action_roles": ["obj_to_be_heated", "action_verb"]
+  },
+  "Pressing": {
+    "action_core": "Pressing",
+    "action_roles": ["obj_to_be_pressed", "action_verb", "location"],
+    "cram_plan": "(perform (an action (type press-object) (an object (type {obj_to_be_pressed}){obj_to_be_pressed_props})(target (a location (on {location}){location_props}))))"
+  },
+  "Pulling": {
+    "action_core": "Pulling",
+    "action_roles": ["obj_to_be_pulled", "action_verb"],
+    "cram_plan": "(perform (an action (type pull-object) (an object (type {obj_to_be_pulled}){obj_to_be_pulled_props})))"
+  },
+  "Putting": {
+    "action_core": "Placing",
+    "action_roles": ["obj_to_be_put", "action_verb", "location"],
+    "cram_plan": "(perform (an action (type put-object) (an object (type {obj_to_be_put}){obj_to_be_put_props})(target (a location (on {location}){location_props}))))"
+  },
+  "Removing": {
+    "action_core": "Removing",
+    "action_roles": ["action_verb", "location", "obj_to_be_removed"],
+    "cram_plan": "(perform (an action (type remove-object) (an object (type {obj_to_be_removed}){obj_to_be_removed_props})(a location (on {location}){location_props})))"
+  },
+  "Rolling": {
+    "action_core": "Rolling",
+    "action_roles": ["theme", "action_verb"],
+    "cram_plan": "(perform (an action (type roll-out-object) (an object (type {theme}){theme_props})))"
+  },
+  "Serving": {
+    "action_core": "Serving",
+    "action_roles": ["theme", "action_verb"]
+  },
+  "Shaking": {
+    "action_core": "Shaking",
+    "action_roles": ["obj_to_be_shaken", "action_verb", "unit", "amount"],
+    "cram_plan": "(perform (an action (type shake) (an object (type {obj_to_be_shaken}){obj_to_be_shaken_props})(count (unit {unit}){unit_props}(number {amount}){amount_props})))"
+  },
+  "Spooning": {
+    "action_core": "Spooning",
+    "action_roles": ["substance", "goal", "action_verb"],
+    "cram_plan": "(perform (an action (type use-spoon) (source (an object (type container.n.01) (contains (a substance (type {substance}){substance_props}))))(a location (on {goal}){goal_props})))"
+  },
+  "Spreading": {
+    "action_core": "Spreading",
+    "action_roles": ["substance", "goal", "action_verb"],
+    "cram_plan": "(perform (an action (type spread) (source (an object (type container.n.01) (contains (a substance (type {substance}){substance_props}))))(a location (on {goal}){goal_props})))"
+  },
+  "Sprinkling": {
+    "action_core": "Sprinkling",
+    "action_roles": ["substance", "goal", "action_verb"],
+    "cram_plan": "(perform (an action (type sprinkle) (source (an object (type container.n.01) (contains (a substance (type {substance}){substance_props}))))(a location (on {goal}){goal_props})))"
+  },
+  "Starting": {
+    "action_core": "Starting",
+    "action_roles": ["obj_to_be_started", "action_verb"]
+  },
+  "Stopping": {
+    "action_core": "Stopping",
+    "action_roles": ["obj_to_be_stopped", "action_verb"]
+  },
+  "Stirring": {
+    "action_core": "Stirring",
+    "action_roles": ["action_verb", "content"],
+    "cram_plan": "(perform (an action (type use-whisk) (a location (in container.n.01) (contains (a substance (type {content}){content_props})))))"
+  },
+  "Storing": {
+    "action_core": "Storing",
+    "action_roles": ["obj_to_be_stored", "action_verb", "location"]
+  },
+  "Taking": {
+    "action_core": "Taking",
+    "action_roles": ["action_verb", "obj_to_be_taken", "location"],
+    "required_action_roles": ["obj_to_be_taken", "action_verb"],
+    "cram_plan": "(perform (an action (type take-object) (an object (type {obj_to_be_taken}){obj_to_be_taken_props})(source (a location (on {location}){location_props}))))"
+  },
+  "Turning": {
+    "action_core": "Turning",
+    "action_roles": ["obj_to_be_turned", "action_verb"],
+    "cram_plan": "(perform (an action (type rotate-joint) (an object (type {obj_to_be_turned}){obj_to_be_turned_props})))"
+  },
+  "TurningOnElectricalDevice": {
+    "action_core": "TurningOnElectricalDevice",
+    "action_roles": ["device", "action_verb"],
+    "cram_plan": "(perform (an action (type turn-on-device) (an object (type {device}){device_props})))"
+  },
+  "Unscrewing": {
+    "action_core": "Unscrewing",
+    "action_roles": ["obj_to_be_unscrewed", "action_verb"],
+    "cram_plan": "(perform (an action (type unscrew) (an object (type {obj_to_be_unscrewed}){obj_to_be_unscrewed_props})))"
+  },
+  "UsingMeasuringCup": {
+    "action_core": "UsingMeasuringCup",
+    "action_roles": ["content", "goal", "action_verb", "amount", "unit"],
+    "cram_plan": "(perform (an action (type use-measuring-cup) (source (an object (type container.n.01) (contains (a substance (type {content}){content_props}))))(count (unit {unit}){unit_props}(number {amount}){amount_props}))(a location (to {goal}){goal_props}))"
+  },
+  "UsingSpiceJar": {
+    "action_core": "UsingSpiceJar",
+    "action_roles": ["content", "goal", "action_verb"],
+    "cram_plan": "(perform (an action (type pour-from-spice-jar) (source (an object (type container.n.01) (contains (a substance (type {content}){content_props}))))(a location (to {goal}){goal_props})))"
+  },
+  "Waiting": {
+    "action_core": "Waiting",
+    "action_roles": ["unit", "action_verb", "amount"],
+    "cram_plan": "(perform (an action (type idle) (count (unit {unit}){unit_props}(number {amount}){amount_props})))"
+  }
+}

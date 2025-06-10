@@ -24,7 +24,7 @@ agent_sys_prompt = """
     
     You have access to one tool:
     
-    `model_selector(instruction: str) -> dict`
+    `entity_attribute_finder(instruction: str) -> dict`
     
     - This tool analyzes the instruction and returns a fully structured CRAM-style action designator as a Python dictionary (JSON-like).
     - The designator includes fields for action, object, tool, and location—each with nested properties.
