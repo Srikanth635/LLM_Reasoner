@@ -154,7 +154,7 @@ framenet_prompt_template = """
 framenet_prompt = ChatPromptTemplate.from_template(framenet_prompt_template)
 
 # llm_fn = ChatOpenAI(model="gpt-4o-mini")
-structured_llm_fn = llm.with_structured_output(FrameNetRepresentation)
+# structured_llm_fn = llm.with_structured_output(FrameNetRepresentation)
 structured_ollama_llm_fn = ollama_llm.with_structured_output(FrameNetRepresentation, method="json_schema")
 
 # Agent Specific Tools
@@ -181,26 +181,26 @@ def framenet_tool(state: Annotated[dict, InjectedState]):
     framenet_answers.append(json_response)
     return json_response
 
-@tool
-def frame_tool(instruction: str):
-    """
-    Generate only Frame name of framenet for a given natural language instruction.
-
-    This function invokes a prompt chain using a predefined FrameNet prompt template and a language model
-    function (llm_fn) to extract frame semantic frame name from the input instruction.
-
-    Args:
-        a (str): A natural language instruction (e.g., "Pick up the bottle from the sink").
-
-    Returns:
-        str : frame name suitable for given input instruction.
-    """
-    print("INSIDE FRAME TOOL")
-    chain = framenet_prompt | structured_llm_fn
-    response = chain.invoke({"input_instruction": instruction})
-    json_response = response.model_dump_json(indent=2, by_alias=True)
-    # return "Srikanth"
-    return response
+# @tool
+# def frame_tool(instruction: str):
+#     """
+#     Generate only Frame name of framenet for a given natural language instruction.
+#
+#     This function invokes a prompt chain using a predefined FrameNet prompt template and a language model
+#     function (llm_fn) to extract frame semantic frame name from the input instruction.
+#
+#     Args:
+#         a (str): A natural language instruction (e.g., "Pick up the bottle from the sink").
+#
+#     Returns:
+#         str : frame name suitable for given input instruction.
+#     """
+#     print("INSIDE FRAME TOOL")
+#     chain = framenet_prompt | structured_llm_fn
+#     response = chain.invoke({"input_instruction": instruction})
+#     json_response = response.model_dump_json(indent=2, by_alias=True)
+#     # return "Srikanth"
+#     return response
 
 # Framenet Agent State
 class FramenetState(TypedDict):

@@ -764,7 +764,7 @@ flanagan_combiner_prompt_template = """
 flanagan_combiner_prompt = ChatPromptTemplate.from_template(flanagan_combiner_prompt_template)
 
 # llm_fn = ChatOpenAI(model="gpt-4o-mini")
-structured_llm_fn = llm.with_structured_output(TaskModel)
+# structured_llm_fn = llm.with_structured_output(TaskModel)
 structured_ollama_llm_fl = ollama_llm.with_structured_output(TaskModel, method="json_schema")
 
 
