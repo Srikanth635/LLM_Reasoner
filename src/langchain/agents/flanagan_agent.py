@@ -5,7 +5,7 @@ from src.langchain.llm_configuration import *
 from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain_core.messages import HumanMessage
 from langchain_core.tools import tool
-from langchain_core.prompts import ChatPromptTemplate, FewShotChatMessagePromptTemplate
+from langchain_core.prompts import ChatPromptTemplate
 from langchain.agents import Tool
 from src.langchain.state_graph import StateModel
 from langgraph.graph import MessagesState
