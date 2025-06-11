@@ -47,7 +47,7 @@ def supervisor_node(state: MessagesState) -> Command[Literal["mather", "web_rese
     messages = [
         {"role": "system", "content": system_prompt},
     ] + state["messages"]
-    response = llm.with_structured_output(Router).invoke(messages)
+    response = ollama_llm.with_structured_output(Router).invoke(messages)
     goto = response["next"]
     print(f"Next Worker: {goto}")
     if goto == "FINISH":

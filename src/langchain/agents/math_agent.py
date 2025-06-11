@@ -22,7 +22,7 @@ def add(a: float, b: float):
 
 
 # Agent
-math_agent = create_agent(llm, [add,multiply])
+math_agent = create_agent(ollama_llm, [add,multiply])
 
 
 # Agent Node
