@@ -10,3 +10,4 @@ class StateModel(MessagesState):
     premotion_phase : str
     phaser : str
     flanagan : str
+    framenet_model : str

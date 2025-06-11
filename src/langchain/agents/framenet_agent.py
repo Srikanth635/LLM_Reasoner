@@ -11,6 +11,7 @@ from langchain.agents import Tool
 from src.langchain.state_graph import StateModel
 from langgraph.graph import MessagesState
 from langgraph.types import Command
+from langgraph.prebuilt import InjectedState, ToolNode
 
 import os
 
@@ -159,7 +160,7 @@ structured_ollama_llm_fn = ollama_llm.with_structured_output(FrameNetRepresentat
 # Agent Specific Tools
 @tool(description="framenet representation of the input string with direct return tool output",
       return_direct=True)
-def framenet_tool(instruction: str):
+def framenet_tool(state: Annotated[dict, InjectedState]):
     """
     Generate a FrameNet-style semantic representation for a given natural language instruction.
 
@@ -173,6 +174,7 @@ def framenet_tool(instruction: str):
         dict: A simplified dictionary with extracted semantic roles (e.g., {'agent': 'robot', 'patient': 'apple'}).
     """
     print("INSIDE FRAMENET TOOL")
+    instruction = state["instruction"]
     chain = framenet_prompt | structured_ollama_llm_fn
     response = chain.invoke({"input_instruction": instruction})
     json_response = response.model_dump_json(indent=2, by_alias=True)
@@ -214,6 +216,7 @@ class FramenetState(TypedDict):
 
 # Agent
 # framenet_agent = create_agent(ollama_llm, [framenet_tool], agent_state_schema=FramenetState)
+# framenet_agent = create_framenet_agent(ollama_llm, [framenet_tool], agent_state_schema=FramenetState)
 framenet_agent = create_framenet_agent(ollama_llm, [framenet_tool], agent_state_schema=FramenetState)
 
 
@@ -232,7 +235,7 @@ def framenet_node(state: MessagesState) -> Command[Literal["supervisor"]]:
         goto="supervisor",
     )
 
-def framenet_node_pal(state: MessagesState):
+def framenet_node_pal(state: StateModel):
     # messages = [
     #                {"role": "system", "content": framenet_system_prompt},
     #            ] + state["messages"]
@@ -241,15 +244,22 @@ def framenet_node_pal(state: MessagesState):
     # agent_chain = framenet_agent | framenet_agent_output_parser
     # result = agent_chain.invoke(state)
     result = framenet_agent.invoke(state)
-    return {
-        "messages": result["messages"][-1]
-    }
 
-def framenet_node_pal_custom(state:MessagesState):
-    result = framenet_agent.invoke(state)
-    return {
-        "messages": result["messages"][-1]
-    }
+    return {'framenet_model': framenet_answers[-1]}
+
+    # return {
+    #     "messages": result["messages"][-1]
+    # }
+
+def framenet_node_pal_custom(state: StateModel):
+    print("INSIDE FRAMENET NODE")
+    instruction = state["instruction"]
+    chain = framenet_prompt | structured_ollama_llm_fn
+    response = chain.invoke({"input_instruction": instruction})
+    json_response = response.model_dump_json(indent=2, by_alias=True)
+    framenet_answers.append(json_response)
+    return {'framenet_model': json_response}
+
 
 if __name__ == "__main__":
     print("INSIDE MAIN")

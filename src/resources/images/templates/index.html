@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flask Web Terminal</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom font and styles for a terminal look */
+        @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=swap');
+        body {
+            font-family: 'Fira Code', monospace;
+        }
+        /* Custom scrollbar for a better aesthetic */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e1e1e;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #555;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #777;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-200">
+
+    <!-- Main container for the two-panel layout -->
+    <div class="flex h-screen w-full">
+
+        <!-- Left Panel: Terminal Input -->
+        <div class="w-1/2 h-full bg-[#1e1e1e] p-4 flex flex-col">
+            <h1 class="text-lg font-bold text-green-400 mb-2 border-b border-gray-700 pb-2">Terminal</h1>
+            <!-- Command history area -->
+            <div id="terminal-history" class="flex-grow overflow-y-auto pr-2">
+                <!-- Commands will be added here dynamically -->
+            </div>
+            <!-- Command input field -->
+            <div class="flex items-center mt-4 border-t border-gray-700 pt-2">
+                <span class="text-green-400 mr-2 font-bold">$&gt;</span>
+                <input 
+                    type="text" 
+                    id="command-input" 
+                    class="w-full bg-transparent border-none focus:outline-none focus:ring-0 text-gray-200"
+                    placeholder="Type a command (e.g., 'help') and press Enter"
+                    autocomplete="off">
+            </div>
+        </div>
+
+        <!-- Right Panel: Command Output -->
+        <div class="w-1/2 h-full bg-[#252526] p-4 border-l border-gray-700">
+             <h1 class="text-lg font-bold text-blue-400 mb-2 border-b border-gray-700 pb-2">Output</h1>
+             <!-- Output display area -->
+            <pre id="output-display" class="w-full h-full whitespace-pre-wrap overflow-y-auto"></pre>
+        </div>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const commandInput = document.getElementById('command-input');
+            const terminalHistory = document.getElementById('terminal-history');
+            const outputDisplay = document.getElementById('output-display');
+
+            // Focus the input field on page load
+            commandInput.focus();
+
+            // Event listener for the 'Enter' key
+            commandInput.addEventListener('keydown', async (event) => {
+                if (event.key === 'Enter') {
+                    const command = commandInput.value.trim();
+                    if (command) {
+                        // Add command to history
+                        addToHistory(command);
+                        
+                        // Clear the output display
+                        outputDisplay.textContent = 'Executing...';
+
+                        // Execute the command
+                        await executeCommand(command);
+
+                        // Clear the input field and scroll history
+                        commandInput.value = '';
+                        terminalHistory.scrollTop = terminalHistory.scrollHeight;
+                    }
+                }
+            });
+
+            function addToHistory(command) {
+                const historyEntry = document.createElement('div');
+                historyEntry.classList.add('flex');
+                historyEntry.innerHTML = `
+                    <span class="text-green-500 mr-2 font-bold">$&gt;</span>
+                    <span class="text-gray-300">${escapeHtml(command)}</span>
+                `;
+                terminalHistory.appendChild(historyEntry);
+            }
+
+            async function executeCommand(command) {
+                try {
+                    const response = await fetch('/execute', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ command: command })
+                    });
+                    
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.output || `HTTP error! status: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    outputDisplay.textContent = data.output;
+
+                } catch (error) {
+                    outputDisplay.textContent = `Client-side error: ${error.message}`;
+                }
+            }
+
+            function escapeHtml(unsafe) {
+                return unsafe
+                     .replace(/&/g, "&amp;")
+                     .replace(/</g, "&lt;")
+                     .replace(/>/g, "&gt;")
+                     .replace(/"/g, "&quot;")
+                     .replace(/'/g, "&#039;");
+            }
+        });
+    </script>
+</body>
+</html>

@@ -3,7 +3,7 @@
 from pydantic import BaseModel, Field
 from typing import Optional, List
 
-from scripts.regsetup import description
+# from scripts.regsetup import description
 
 
 class Adding(BaseModel):
