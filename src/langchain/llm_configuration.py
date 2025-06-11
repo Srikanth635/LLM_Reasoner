@@ -7,7 +7,7 @@ LLM_TEMPERATURE = 0.3
 # llm = ChatOpenAI(model=LLM_MODEL, temperature=LLM_TEMPERATURE)
 
 
-from langchain_ollama.llms import OllamaLLM
+# from langchain_ollama.llms import OllamaLLM
 from langchain_ollama import ChatOllama
 
 ollama_llm = ChatOllama(model="qwen3:8b")
