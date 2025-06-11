@@ -1,0 +1,372 @@
+ Instruction: slice the mango into 2 pieces
+ Enriched_action_core_attributes: Here's the properly formatted JSON with the enriched properties for the `obj_to_be_cut` (mango) based on the structure and logic from your example:
+
+```json
+{
+  "action_verb": "slice",
+  "obj_to_be_cut": "mango",
+  "obj_to_be_cut_props": {
+    "color": "yellow",
+    "shape": "oval",
+    "texture": "smooth"
+  },
+  "amount": "2",
+  "unit": "pieces",
+  "utensil": null
+}
+```
+
+---
+
+### Explanation of the Enrichment:
+
+- **`obj_to_be_cut_props`**
+  The key `obj_to_be_cut_props` is added to describe the mango, which is an object. The properties:
+  - **`color`**: `"yellow"` (standard for ripe mangoes).
+  - **`shape`**: `"oval"` (typical shape of a mango).
+  - **`texture`**: `"smooth"` (assuming the mango is peeled or the skin is not considered).
+
+- **Other Keys**
+  - `action_verb`: `"slice"` (no enrichment needed, as it's a verb, not an object).
+  - `amount`: `"2"` (a numerical value, not an object).
+  - `unit`: `"pieces"` (a term, not an object).
+  - `utensil`: `null` (no value to enrich).
+
+---
+
+### Notes:
+- The JSON structure is valid and adheres to standard syntax with proper braces and commas.
+- The enrichment focuses on **describing the object** (`mango`) rather than the quantity (`amount`) or the unit (`pieces`).
+- This approach mirrors the example you provided, but with correct JSON formatting.
+
+ Cram_plan_response: (perform (an action (type cut-object) (an object (type mango) (color yellow) (shape oval) (texture smooth)) (count (unit pieces) (number 2)) (utensil (an object (type null)))))
+ Flanagan: {
+  "task": "SlicingMango",
+  "pre_motion_phase": {
+    "goal_definition": {
+      "task": "SlicingMango",
+      "semantic_annotation": "PhaseClass:PreMotion",
+      "object": {
+        "id": "mango",
+        "type": "fruit",
+        "properties": {
+          "size": "medium",
+          "texture": "smooth",
+          "material": "peel",
+          "fill_level": null,
+          "contents": null,
+          "hardness": null,
+          "friction_coefficient": null,
+          "elasticity": null,
+          "strain_limit": null
+        },
+        "expected_end_state": null
+      },
+      "target": {
+        "id": "cutting_surface",
+        "type": "surface",
+        "properties": {
+          "size": null,
+          "texture": null,
+          "material": "wood",
+          "fill_level": null,
+          "contents": null,
+          "hardness": null,
+          "friction_coefficient": null,
+          "elasticity": null,
+          "strain_limit": 50.0
+        },
+        "expected_end_state": null
+      },
+      "tool": {
+        "id": "knife",
+        "type": "cutting",
+        "properties": {
+          "material": "steel",
+          "blade_length": "15cm",
+          "handle_type": "ergonomic"
+        }
+      }
+    },
+    "predictive_model": {
+      "expected_trajectory": "linear",
+      "expected_force": {
+        "min": 20.0,
+        "max": 40.0
+      },
+      "confidence_level": 0.85,
+      "affordance_model": {
+        "object_affordance": true,
+        "tool_affordance": true,
+        "surface_affordance": true
+      }
+    },
+    "motion_planning": {
+      "planned_trajectory": "linear",
+      "obstacle_avoidance": "active",
+      "energy_efficiency": "high"
+    }
+  },
+  "initiation_phase": {
+    "initial_state": {
+      "robot_pose": {
+        "joint_angles": [
+          0.1,
+          0.2,
+          0.3,
+          0.4,
+          0.5,
+          0.6
+        ],
+        "end_effector_position": [
+          0.5,
+          0.5,
+          0.5
+        ]
+      },
+      "tool_position": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "target_object_position": [
+        0.6,
+        0.6,
+        0.6
+      ]
+    },
+    "motion_initialization": {
+      "joint_activation": {
+        "joint_1": 0.5,
+        "joint_2": 0.3,
+        "joint_3": 0.4,
+        "joint_4": 0.2,
+        "joint_5": 0.1,
+        "joint_6": 0.0
+      },
+      "velocity_profile": "low_speed",
+      "motion_priming": {
+        "gripper_open": true,
+        "tool_positioning": true
+      }
+    },
+    "SubPhases": [
+      {
+        "name": "PrepareForCutting",
+        "description": "Initialize the robot's arm and gripper for the cutting action.",
+        "goalState": [
+          {
+            "conditions": {
+              "gripper_state": {
+                "value": true,
+                "quantity": true
+              }
+            }
+          },
+          {
+            "conditions": {
+              "tool_position": {
+                "value": true,
+                "quantity": true
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "SymbolicGoals": [
+      {
+        "conditions": {
+          "robot_state": {
+            "value": true,
+            "quantity": true
+          }
+        }
+      }
+    ],
+    "SemanticAnnotation": "PhaseClass:Initiation"
+  },
+  "execution_phase": {
+    "SubPhases": [
+      {
+        "name": "ApproachObject",
+        "description": "Move the cutting tool to the position above the mango.",
+        "goalState": [
+          {
+            "conditions": {
+              "tool_position": {
+                "value": true,
+                "quantity": true
+              }
+            }
+          },
+          {
+            "conditions": {
+              "object_position": {
+                "value": true,
+                "quantity": true
+              }
+            }
+          }
+        ]
+      },
+      {
+        "name": "AlignToolForCut",
+        "description": "Align the knife with the mango surface for a precise cut.",
+        "goalState": [
+          {
+            "conditions": {
+              "tool_alignment": {
+                "value": true,
+                "quantity": true
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "SymbolicGoals": [
+      {
+        "conditions": {
+          "ready_to_cut": {
+            "value": true,
+            "quantity": true
+          }
+        }
+      }
+    ],
+    "SemanticAnnotation": "PhaseClass:Execution"
+  },
+  "interaction_phase": {
+    "SubPhases": [
+      {
+        "name": "PerformCut",
+        "description": "Execute the cutting action on the mango.",
+        "goalState": [
+          {
+            "conditions": {
+              "cut_depth": {
+                "value": true,
+                "quantity": true
+              }
+            }
+          },
+          {
+            "conditions": {
+              "cut_quality": {
+                "value": true,
+                "quantity": true
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "SymbolicGoals": [
+      {
+        "conditions": {
+          "cutting_done": {
+            "value": true,
+            "quantity": true
+          }
+        }
+      }
+    ],
+    "SemanticAnnotation": "PhaseClass:Interaction"
+  },
+  "termination_phase": {
+    "SubPhases": [
+      {
+        "name": "PostCutting",
+        "description": "Post-cutting actions to ensure safety and completion.",
+        "goalState": [
+          {
+            "conditions": {
+              "safety_check": {
+                "value": true,
+                "quantity": true
+              }
+            }
+          },
+          {
+            "conditions": {
+              "task_completion": {
+                "value": true,
+                "quantity": true
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "SymbolicGoals": [
+      {
+        "conditions": {
+          "task_complete": {
+            "value": true,
+            "quantity": true
+          }
+        }
+      }
+    ],
+    "SemanticAnnotation": "PhaseClass:Termination"
+  },
+  "post_motion_phase": {
+    "SubPhases": [
+      {
+        "name": "PostTask",
+        "description": "Post-task actions to reset the system and prepare for next task.",
+        "goalState": [
+          {
+            "conditions": {
+              "system_reset": {
+                "value": true,
+                "quantity": true
+              }
+            }
+          },
+          {
+            "conditions": {
+              "next_task_ready": {
+                "value": true,
+                "quantity": true
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "SymbolicGoals": [
+      {
+        "conditions": {
+          "system_ready": {
+            "value": true,
+            "quantity": true
+          }
+        }
+      }
+    ],
+    "SemanticAnnotation": "PhaseClass:PostMotion"
+  }
+}
+ Framenet_model: {
+  "framenet": "slicing",
+  "frame": "Cutting",
+  "lexical-unit": "slice.v",
+  "core": {
+    "agent": "robot",
+    "theme_patient": "mango",
+    "instrument": "knife",
+    "source": "",
+    "goal": "",
+    "result": "two pieces of mango"
+  },
+  "peripheral": {
+    "location": "kitchen counter",
+    "manner": "precisely",
+    "direction": "downward",
+    "time": "during preparation",
+    "quantity": "one mango",
+    "portion": "whole"
+  }
+}

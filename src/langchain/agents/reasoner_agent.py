@@ -1,5 +1,6 @@
 from src.langchain.llm_configuration import *
 from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import JsonOutputParser
 import re
 
 reasoner_prompt_template = """
@@ -105,6 +106,9 @@ reasoner_prompt_template = """
     
 """
 
+
+json_parser = JsonOutputParser()
+
 def think_remover(res : str):
     if re.search(r"<think>.*?</think>", res, flags=re.DOTALL):
         cleaned_res = re.sub(r"<think>.*?</think>", "", res, flags=re.DOTALL).strip()
@@ -115,7 +119,7 @@ def think_remover(res : str):
 
 reasoner_prompt = ChatPromptTemplate.from_template(reasoner_prompt_template)
 
-reasoner_chain = reasoner_prompt | ollama_llm
+reasoner_chain = reasoner_prompt | ollama_llm | json_parser
 
 def invoke_reasoner(context : str, query : str):
     reasoner_response = reasoner_chain.invoke({'context': context, 'query': query})
