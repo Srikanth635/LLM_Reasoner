@@ -135,9 +135,6 @@ mistune==3.1.2
 mpmath==1.3.0
 msgpack==1.1.0
 multidict==6.1.0
-multiverse_client_py @ file:///home/malineni/VC_Pools/Multiverse/multiverse/build/modules/multiverse_connectors/src/multiverse_client_py/multiverse_client_py-0.0.1.tar.gz#sha256=035a7d15c1a458e5b0801ad4e0d74144a4ed66585bf7763b38da77a300928dca
-multiverse_parser @ file:///home/malineni/VC_Pools/Multiverse/multiverse/build/modules/multiverse_parser/multiverse_parser-0.0.1.tar.gz#sha256=d06271d29a51a3b20c44670546ed7102b99f57219958004aad9d08b559310da7
-multiverse_ros_socket @ file:///home/malineni/VC_Pools/Multiverse/multiverse/build/modules/multiverse_connectors/src/ros/multiverse_ros_socket-0.0.1.tar.gz#sha256=68695397b857336b202a080027ecdf04ab261a624f29f4ec0c4f26e64b99578d
 mypy-extensions==1.0.0
 narwhals==1.35.0
 nbclient==0.10.2
