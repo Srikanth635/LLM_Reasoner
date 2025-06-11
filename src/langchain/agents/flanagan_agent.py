@@ -7,7 +7,7 @@ from langchain_core.messages import HumanMessage
 from langchain_core.tools import tool
 from langchain_core.prompts import ChatPromptTemplate, FewShotChatMessagePromptTemplate
 from langchain.agents import Tool
-
+from src.langchain.state_graph import StateModel
 from langgraph.graph import MessagesState
 from langgraph.types import Command
 
@@ -769,35 +769,50 @@ structured_ollama_llm_fl = ollama_llm.with_structured_output(TaskModel, method="
 
 
 
-def flanagan_premotion_tool(instruction: str, action_core : str, enriched_json_attributes : str):
+def flanagan_premotion_node(state : StateModel):
     """
     Generate a structured Flanagan-style task premotion phase model representation from a natural language instruction, action core
     and enriched attributes information
     """
     print("INSIDE flanagan PREMOTION TOOL")
+    instruction = state['instruction']
+    action_core = state['action_core']
+    enriched_json_attributes = state['enriched_action_core_attributes']
+
     chain = flanagan_premotion_prompt | ollama_llm.with_structured_output(FullPhase, method="json_schema")
     response = chain.invoke({"instruction": instruction, "action_core" : action_core, "enriched_attributes" : enriched_json_attributes})
     print(response)
+    return {'premotion_phase' : response.model_dump_json(indent=2, by_alias=True)}
 
-def flanagan_phaser_tool(premotion_phase :str, cram_plan:str, action_core : str, instruction : str):
+def flanagan_phaser_node(state:StateModel):
     """
     Generate a structured Flanagan-style task phase model representation from a natural language instruction, action core,
     enriched attributes information and low level cram action designator
     """
     print("INSIDE flanagan PHASER TOOL")
+    premotion_phase = state['premotion_phase']
+    cram_plan = state['cram_plan_response']
+    action_core = state['action_core']
+    instruction = state['instruction']
+
     chain2 = flanagan_phaser_prompt | ollama_llm.with_structured_output(TaskModel, method="json_schema")
     response2 = chain2.invoke({"premotion_phase": premotion_phase, "cram_plan" : cram_plan, "action_core" : action_core, "instruction" : instruction})
     print(response2)
+    return {'phaser' : response2.model_dump_json(indent=2)}
 
-def flanagan_repr(premotion_phase:str, phaser:str):
+def flanagan_repr(state : StateModel):
     """
     Generate a structured full Flanagan-style task model representation from a predefined premotion phase and remaining
     sequential phase information.
     """
     print("INSIDE flanagan REPR")
+    premotion_phase = state['premotion_phase']
+    phaser = state['phaser']
+
     chain3 = flanagan_combiner_prompt | ollama_llm.with_structured_output(FinalModel, method="json_schema")
     response3 = chain3.invoke({"premotion_phase": premotion_phase, "phaser" : phaser})
     print(response3)
+    return {'flanagan' : response3.model_dump_json(indent=2)}
 
 
 # Agent Specific Tools

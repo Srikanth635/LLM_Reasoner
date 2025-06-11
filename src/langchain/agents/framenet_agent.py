@@ -8,7 +8,7 @@ from langchain_core.tools import tool
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
 from langchain.agents import Tool
-
+from src.langchain.state_graph import StateModel
 from langgraph.graph import MessagesState
 from langgraph.types import Command
 

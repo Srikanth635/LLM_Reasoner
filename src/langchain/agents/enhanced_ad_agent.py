@@ -10,6 +10,7 @@ import re
 from pydantic import BaseModel
 from pathlib import Path
 from src.resources.pycram.cram_models import *
+from src.langchain.state_graph import StateModel
 
 action_classes = [Adding,
     Arranging,
@@ -703,7 +704,7 @@ cram_plan_prompt_template = """
 """
 
 # Nodes
-def action_node(state: ADState):
+def action_node(state: StateModel):
     print("INSIDE ACTION NODE")
 
     instruction = state["instruction"]
@@ -728,7 +729,7 @@ def action_node(state: ADState):
     except:
         raise Exception("Parsing Error , Try Rerunning", print(response))
 
-def cram_node(state : ADState):
+def cram_node(state : StateModel):
     print("INSIDE UNIVERSAL NODE")
     instruction = state['instruction']
     action_core = state['action_core']

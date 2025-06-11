@@ -5,12 +5,14 @@ from langgraph.graph import StateGraph,START,END, MessagesState
 from langgraph.checkpoint.memory import MemorySaver
 from src.langchain.agents.framenet_agent import framenet_node, framenet_node_pal
 from src.langchain.agents.ad_agent import ad_agent_node_pal
-from src.langchain.agents.flanagan_agent import flanagan_node, flanagan_node_pal
+from src.langchain.agents.flanagan_agent import flanagan_node_pal, flanagan_premotion_node, flanagan_phaser_node, flanagan_repr
 from src.langchain.agents.math_agent import math_node
 from src.langchain.agents.websearch_agent import web_research_node, web_research_node_pal
 from src.langchain.agents.pycram_agent import pycram_node_pal
 from langgraph.prebuilt import create_react_agent
 from src.langchain.create_agents import *
+from src.langchain.agents.enhanced_ad_agent import *
+from src.langchain.state_graph import StateModel
 
 memory = MemorySaver()
 class SharedState(TypedDict):
@@ -19,6 +21,16 @@ class SharedState(TypedDict):
     framenet : str
     flanagan : str
 
+# class StateModel(MessagesState):
+#     instruction : str
+#     action_type : str
+#     action_core : str
+#     action_core_attributes : str
+#     enriched_action_core_attributes : str
+#     cram_plan_response : str
+#     premotion_phase : str
+#     phaser : str
+#     flanagan : str
 
 # Aggregator Node
 def aggregator_node(state: MessagesState):
@@ -38,24 +50,33 @@ def director_node(state: MessagesState):
     return state
 
 
-builder = StateGraph(MessagesState)
-builder.add_node("action_designator", ad_agent_node_pal)
-builder.add_node("web_researcher", web_research_node_pal)
-builder.add_node("pycram", pycram_node_pal)
-builder.add_node("framenet", framenet_node_pal)
-# builder.add_node("flanagan", flanagan_node_pal)
+builder = StateGraph(StateModel)
+# builder.add_node("action_designator", ad_agent_node_pal)
+builder.add_node("action_node", action_node)
+builder.add_node("cram_node", cram_node)
+# builder.add_node("web_researcher", web_research_node_pal)
+# builder.add_node("pycram", pycram_node_pal)
+# builder.add_node("framenet", framenet_node_pal)
+builder.add_node("flanagan_premotion_node",flanagan_premotion_node )
+builder.add_node("flanagan_phaser_node", flanagan_phaser_node)
+builder.add_node("flanagan_repr", flanagan_repr)
 builder.add_node("aggregator", aggregator_node)
 
-builder.add_edge(START, "action_designator")
-builder.add_edge("action_designator", "web_researcher")
-builder.add_edge("action_designator", "pycram")
-builder.add_edge("action_designator", "framenet")
-# builder.add_edge("action_designator", "flanagan")
+builder.add_edge(START, "action_node")
+builder.add_edge("action_node","cram_node")
+# builder.add_edge("cram_node", "web_researcher")
+# builder.add_edge("cram_node", "pycram")
+# builder.add_edge("cram_node", "framenet")
+builder.add_edge("cram_node", "flanagan_premotion_node")
 
-builder.add_edge("web_researcher", "aggregator")
-builder.add_edge("pycram", "aggregator")
-builder.add_edge("framenet", "aggregator")
-# builder.add_edge("flanagan", "aggregator")
+builder.add_edge("flanagan_premotion_node", "flanagan_phaser_node")
+builder.add_edge("flanagan_phaser_node", "flanagan_repr")
+
+
+# builder.add_edge("web_researcher", "aggregator")
+# builder.add_edge("pycram", "aggregator")
+# builder.add_edge("framenet", "aggregator")
+builder.add_edge("flanagan_repr", "aggregator")
 builder.add_edge("aggregator", END)
 pal_graph = builder.compile()
 
