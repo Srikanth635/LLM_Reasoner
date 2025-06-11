@@ -4,7 +4,7 @@ load_dotenv(find_dotenv(), override=True)
 
 LLM_MODEL = "gpt-4o-mini"
 LLM_TEMPERATURE = 0.3
-llm = ChatOpenAI(model=LLM_MODEL, temperature=LLM_TEMPERATURE)
+# llm = ChatOpenAI(model=LLM_MODEL, temperature=LLM_TEMPERATURE)
 
 
 from langchain_ollama.llms import OllamaLLM
