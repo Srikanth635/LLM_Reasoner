@@ -1,7 +1,7 @@
 {
   "dependencies" : ["."],
   "graphs" : {
-    "react_agent" : "./src/langchain/parallel_workflow.py:pal_graph"
+    "react_agent" : "./src/langchain/models_graph.py:model_graph"
   },
   "env" : ".env"
 }

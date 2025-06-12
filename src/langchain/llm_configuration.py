@@ -6,11 +6,19 @@ LLM_MODEL = "gpt-4o-mini"
 LLM_TEMPERATURE = 0.3
 # llm = ChatOpenAI(model=LLM_MODEL, temperature=LLM_TEMPERATURE)
 
+OLLAMA_MODEL = "qwen3:8b"
 
 # from langchain_ollama.llms import OllamaLLM
 from langchain_ollama import ChatOllama
 
-ollama_llm = ChatOllama(model="qwen3:8b")
+try:
+    print("Trying OLLAMA model 8b")
+    ollama_llm = ChatOllama(model="qwen3:8b")
+    print("OLLAMA model found")
+except:
+    print("OLLAMA model not found")
+    ollama_llm = ChatOllama(model=OLLAMA_MODEL)
+
 # ollama_llm = ChatOllama(model="qwen3:4b")
 
 # ollama_llm = ChatOllama(model="gemma3:4b")

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>JSON Viewer (Dark)</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #121212;
+      padding: 40px 20px;
+      color: #e0e0e0;
+    }
+
+    .container {
+      background: #1e1e1e;
+      border-radius: 12px;
+      padding: 30px;
+      max-width: 960px;
+      margin: auto;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    }
+
+    .button-bar {
+      text-align: right;
+      margin-bottom: 25px;
+    }
+
+    button {
+      background: linear-gradient(135deg, #0074d9, #005fa3);
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      margin-left: 10px;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      background: linear-gradient(135deg, #339af0, #1971c2);
+    }
+
+    pre {
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 16px;
+      line-height: 1.7;
+      white-space: pre-wrap;
+      word-break: break-word;
+      color: #e0e0e0;
+    }
+
+    .json-key {
+      color: #4dabf7;
+      font-weight: bold;
+    }
+
+    .json-string {
+      color: #63e6be;
+    }
+
+    .json-number {
+      color: #ff6b6b;
+    }
+
+    .json-boolean {
+      color: #ffd43b;
+    }
+
+    .json-null {
+      color: #adb5bd;
+    }
+
+    .json-toggle {
+      cursor: pointer;
+      color: #888;
+      font-weight: bold;
+      margin-right: 6px;
+      display: inline-block;
+      width: 14px;
+    }
+
+    .json-collapsed {
+      display: none;
+    }
+
+    .section-indent {
+      margin-left: 20px;
+    }
+
+    @media (max-width: 600px) {
+      pre {
+        font-size: 14px;
+      }
+
+      button {
+        margin-top: 10px;
+        display: inline-block;
+      }
+
+      .button-bar {
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="button-bar">
+      <button onclick="toggleAll()">Expand All</button>
+      <button onclick="location.reload()">🔄 Refresh</button>
+    </div>
+    <pre id="json-container"></pre>
+  </div>
+
+  <script>
+    const jsonData = {{ data | tojson | safe }};
+    let allExpanded = false;
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function formatValue(value) {
+      if (value === null) return '<span class="json-null">null</span>';
+      if (typeof value === 'string') return '<span class="json-string">"' + escapeHtml(value) + '"</span>';
+      if (typeof value === 'number') return '<span class="json-number">' + value + '</span>';
+      if (typeof value === 'boolean') return '<span class="json-boolean">' + value + '</span>';
+      return escapeHtml(String(value));
+    }
+
+    function renderJson(obj, indent = 0, path = '') {
+      const pad = '  '.repeat(indent);
+      let html = '';
+
+      if (Array.isArray(obj)) {
+        const id = 'id_' + path.replace(/\./g, '_');
+        html += `${pad}<span class="json-toggle" onclick="toggle('${id}')">▶</span>[<div id="${id}" class="json-collapsed section-indent">`;
+        obj.forEach((item, index) => {
+          html += renderJson(item, indent + 1, `${path}.${index}`);
+          if (index < obj.length - 1) html += ',';
+          html += '\n';
+        });
+        html += `${pad}]</div>`;
+      } else if (typeof obj === 'object' && obj !== null) {
+        const id = 'id_' + path.replace(/\./g, '_');
+        html += `${pad}<span class="json-toggle" onclick="toggle('${id}')">▶</span>{<div id="${id}" class="json-collapsed section-indent">`;
+        const keys = Object.keys(obj);
+        keys.forEach((key, index) => {
+          html += `${'  '.repeat(indent + 1)}<span class="json-key">"${escapeHtml(key)}"</span>: `;
+          const val = obj[key];
+          if (typeof val === 'object' && val !== null) {
+            html += '\n' + renderJson(val, indent + 2, `${path}.${key}`);
+          } else {
+            html += formatValue(val);
+          }
+          if (index < keys.length - 1) html += ',';
+          html += '\n';
+        });
+        html += `${pad}}</div>`;
+      } else {
+        html += `${pad}${formatValue(obj)}\n`;
+      }
+
+      return html;
+    }
+
+    function toggle(id) {
+      const el = document.getElementById(id);
+      const icon = el.previousElementSibling;
+      if (el.classList.contains('json-collapsed')) {
+        el.classList.remove('json-collapsed');
+        icon.textContent = '▼';
+      } else {
+        el.classList.add('json-collapsed');
+        icon.textContent = '▶';
+      }
+    }
+
+    function toggleAll() {
+      const allToggles = document.querySelectorAll('.json-toggle');
+      const allSections = document.querySelectorAll('[id^="id_"]');
+      allExpanded = !allExpanded;
+      allToggles.forEach(t => t.textContent = allExpanded ? '▼' : '▶');
+      allSections.forEach(s => {
+        if (allExpanded) {
+          s.classList.remove('json-collapsed');
+        } else {
+          s.classList.add('json-collapsed');
+        }
+      });
+    }
+
+    document.getElementById('json-container').innerHTML = renderJson(jsonData);
+  </script>
+</body>
+</html>

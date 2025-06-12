@@ -2,6 +2,8 @@ from src.langchain.llm_configuration import *
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import JsonOutputParser
 import re
+from typing import Dict
+from pydantic import BaseModel, Field
 
 reasoner_prompt_template = """
     You are a highly specialized information retrieval AI. Your sole function is to receive a large, structured context and a 
@@ -106,8 +108,172 @@ reasoner_prompt_template = """
     
 """
 
+reasoner_prompt_template2 = """
+    You are a headless, specialized data extraction and synthesis engine. Your function is to interpret a user's QUERY, locate all semantically 
+    relevant information within a structured CONTEXT, and return a single, precise JSON object that completely answers the query.
 
-json_parser = JsonOutputParser()
+    ### Core Task ###
+    Interpret the semantic intent of the QUERY. Then, extract and synthesize all required data from the CONTEXT into a single, coherent, and complete JSON object.
+    
+    ### Operational Workflow ###
+    - Interpret Query Intent: 
+        - Analyze the QUERY to understand its underlying goal. Do not simply search for keywords. Determine what kind of information 
+        constitutes a full answer. For example, a query about "how" to do something implies looking for execution steps, while a query about "what" is being done 
+        implies looking for the core goal or theme.
+    
+    - Map Intent to Context & Extract: 
+        - Scan the CONTEXT to understand the purpose of each major JSON object. Map the query's intent to the relevant object(s). Extract all
+        key-value pairs, objects, and arrays necessary to fulfill that intent. This may require extracting data from multiple, separate parts of the CONTEXT.
+    
+    - Synthesize a Complete Answer:
+        - Assemble the extracted data into a single, logical JSON object. If data was pulled from multiple sources, you MUST combine it into a 
+        coherent structure that directly and fully answers the user's conceptual query. The final object should be self-contained and logical.
+    
+    - Format the Output: 
+        Ensure the final output strictly adheres to the mandates below.
+    
+    ### Output Mandates (Non-negotiable) ###
+    - Format:
+        - The response MUST be a single, valid JSON object. The entire text output must start with curly brace (or [ if the root is an array) and end with curly brace (or ]).
+    - Content Purity:
+        - The output MUST ONLY contain data present in the provided CONTEXT. Do not infer, add, or alter any information. You may structure the 
+            extracted data under new descriptive keys if it aids in synthesizing a coherent answer (as shown in Example 2).
+    - Strict Exclusion:
+        - There must be ABSOLUTELY NO introductory text, explanations, apologies, summaries, or any other conversational text in the response.
+    
+    ## Example Interactions ##
+    Example 1: Direct Query
+    GIVEN CONTEXT: 
+    CONTEXT:
+    
+    
+      "instruction_id": "INS-4815",
+      "action_core": 
+        "name": "PLACE",
+        "theme": "the red block",
+        "goal": 
+          "type": "location_relation",
+          "relation": "on_top_of",
+          "anchor": "the blue cube"
+        
+      ,
+      "cram_plan": 
+        "plan_name": "place-object-on-another",
+        "phases": [
+          
+            "phase_name": "reaching",
+            "motion": "move-arm-to-object"
+          ,
+          
+            "phase_name": "grasping",
+            "motion": "close-gripper"
+          
+        ]
+      ,
+      "framenet_info": 
+        "frame": "Placing",
+        "lexical_units": ["place", "put", "set"]
+      
+    
+    GIVEN QUERY: What is the cram plan information?
+    REQUIRED RESPONSE:
+    JSON
+    
+    {{
+      "plan_name": "place-object-on-another",
+      "phases": [
+        {{
+          "phase_name": "reaching",
+          "motion": "move-arm-to-object"
+        }},
+        {{
+          "phase_name": "grasping",
+          "motion": "close-gripper"
+        }}
+      ]
+    }}
+    Example 2: Inferential / Synthesis Query
+    GIVEN CONTEXT:
+    
+    JSON
+    
+    {{
+      "instruction_id": "INS-4815",
+      "action_core": {{
+        "name": "PLACE",
+        "theme": "the red block",
+        "goal": {{
+          "type": "location_relation",
+          "relation": "on_top_of",
+          "anchor": "the blue cube"
+        }}
+      }},
+      "cram_plan": {{
+        "plan_name": "place-object-on-another",
+        "phases": [
+          {{
+            "phase_name": "reaching",
+            "motion": "move-arm-to-object"
+          }},
+          {{
+            "phase_name": "grasping",
+            "motion": "close-gripper"
+          }}
+        ]
+      }}
+    }}
+    
+    GIVEN QUERY: Describe the complete action to be performed.
+    REQUIRED RESPONSE: (This response synthesizes two different top-level keys into one logical answer)
+    
+    JSON
+    
+    {{
+      "action_goal": {{
+        "name": "PLACE",
+        "theme": "the red block",
+        "goal": {{
+          "type": "location_relation",
+          "relation": "on_top_of",
+          "anchor": "the blue cube"
+        }}
+      }},
+      "execution_plan": {{
+        "plan_name": "place-object-on-another",
+        "phases": [
+          {{
+            "phase_name": "reaching",
+            "motion": "move-arm-to-object"
+          }},
+          {{
+            "phase_name": "grasping",
+            "motion": "close-gripper"
+          }}
+        ]
+      }}
+    }}
+    
+    ---
+    NOTE: Take the above example just as a reference for patterns not for exact structures.
+    
+    Now, perform the task for the given context and user query,
+    
+    CONTEXT:
+    
+    {context}
+    
+    QUERY:
+    
+    {query}
+    
+    OUTPUT: 
+
+"""
+
+class JsonReasoner(BaseModel):
+    content : Dict[str, str]
+
+# json_parser = JsonOutputParser(pydantic_object=JsonReasoner)
 
 def think_remover(res : str):
     if re.search(r"<think>.*?</think>", res, flags=re.DOTALL):
@@ -117,11 +283,16 @@ def think_remover(res : str):
 
     return cleaned_res
 
-reasoner_prompt = ChatPromptTemplate.from_template(reasoner_prompt_template)
+reasoner_prompt2 = ChatPromptTemplate.from_template(reasoner_prompt_template2)
 
-reasoner_chain = reasoner_prompt | ollama_llm | json_parser
+reasoner_chain = reasoner_prompt2 | ollama_llm.with_structured_output(JsonReasoner, method="json_schema")
 
 def invoke_reasoner(context : str, query : str):
+
+    print("Came to Reasoner")
+
     reasoner_response = reasoner_chain.invoke({'context': context, 'query': query})
-    clean_response = think_remover(reasoner_response.content)
-    return clean_response
+    # clean_response = think_remover(reasoner_response['content'])
+
+    print("Clean Reasoned Response ", reasoner_response)
+    return reasoner_response.model_dump_json(indent=2)

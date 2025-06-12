@@ -78,4 +78,4 @@ def execute_command():
 if __name__ == '__main__':
     # Binds to localhost only. Do not change host to '0.0.0.0'
     # as that would expose this dangerous app to your network.
-    app.run(debug=True, host='127.0.0.1')
+    app.run(debug=True, host='127.0.0.1', port=8082)

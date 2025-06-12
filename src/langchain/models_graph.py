@@ -41,4 +41,8 @@ model_builder.add_edge("flanagan_repr", "aggregator")
 model_builder.add_edge("framenet", "aggregator")
 model_builder.add_edge("aggregator", END)
 
-models_graph = model_builder.compile(checkpointer=memory2)
+model_graph = model_builder.compile(checkpointer=memory2)
+
+
+if __name__ == "__main__":
+    print()

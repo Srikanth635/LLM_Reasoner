@@ -2,6 +2,8 @@ from flask import Flask, request, jsonify
 from src.langchain.parallel_workflow import *
 from src.langchain.models_graph import *
 from src.langchain.agents.reasoner_agent import *
+import requests
+
 app = Flask(__name__)
 
 @app.route('/')
@@ -38,6 +40,15 @@ def generate_designator():
             "enriched_action_core_attributes" : enriched_action_core_attributes
         }
 
+        try:
+            display_server_url = 'http://127.0.0.1:8082/display'
+            server_b_response = requests.post(display_server_url, json=model_response)
+            # Check if Server B responded successfully (e.g., status code 200 OK)
+            server_b_response.raise_for_status()
+            print("Displayed results")
+        except Exception as e:
+            print(f"Error displaying results: {e}")
+
         return jsonify(model_response), 200
 
     except Exception as e:
@@ -62,20 +73,29 @@ def build_designator_models():
 
         # Model Invocation
         _config = {"configurable": {"thread_id": 2}}
-        final_graph_state = models_graph.invoke({"instruction": _instruction,
+        final_graph_state = model_graph.invoke({"instruction": _instruction,
                                                  "action_core": _action_core,
                                                  "enriched_action_core_attributes": _enriched_action_core_attributes,
                                                  "cram_plan_response": _cram_plan_response}, config=_config, stream_mode="updates")
 
 
-        flanagan = models_graph.get_state(_config).values["flanagan"]
-        framenet_model = models_graph.get_state(_config).values["framenet_model"]
+        flanagan = model_graph.get_state(_config).values["flanagan"]
+        framenet_model = model_graph.get_state(_config).values["framenet_model"]
 
 
         model_response = {
             "flanagan" : flanagan,
             "framenet_model" : framenet_model
         }
+
+        try:
+            display_server_url = 'http://127.0.0.1:8082/display'
+            server_b_response = requests.post(display_server_url, json=model_response)
+            # Check if Server B responded successfully (e.g., status code 200 OK)
+            server_b_response.raise_for_status()
+            print("Displayed results")
+        except Exception as e:
+            print(f"Error displaying results: {e}")
 
         return jsonify(model_response), 200
 
@@ -100,11 +120,21 @@ def reasoner():
         CONTEXT = (f'Instruction: {_instruction} \n Enriched_action_core_attributes: {_enriched_action_core_attributes} '
                    f'\n Cram_plan_response: {_cram_plan_response} \n Flanagan: {_flanagan} \n Framenet_model: {_framenet_model} ')
 
-        print("HUGE CONTEXT : " ,CONTEXT)
+        # print("HUGE CONTEXT : " ,CONTEXT)
         # Invoke LLM
         _config = {"configurable": {"thread_id": 3}}
 
+        print("Invoking Reasoner")
         response = invoke_reasoner(CONTEXT, _query)
+
+        try:
+            display_server_url = 'http://127.0.0.1:8082/display'
+            server_b_response = requests.post(display_server_url, json=response)
+            # Check if Server B responded successfully (e.g., status code 200 OK)
+            server_b_response.raise_for_status()
+            print("Displayed results")
+        except Exception as e:
+            print(f"Error displaying results: {e}")
 
         print("Reasoner response", response)
 

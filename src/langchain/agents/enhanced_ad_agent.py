@@ -533,7 +533,9 @@ field_prompt_template = """
     instruction : {instruction}
     action_core : {action_core}
     target_attributes : {target_attributes}
-
+    
+    
+    /nothink
 """
 
 field_props_prompt_template = """
@@ -641,6 +643,8 @@ field_props_prompt_template = """
     Now perform the task for the given, attribute-value action_roles JSON
     
     action_roles : {action_roles}
+    
+    /nothink
 """
 
 cram_plan_prompt_template = """
