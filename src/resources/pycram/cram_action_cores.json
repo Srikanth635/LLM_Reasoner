@@ -106,7 +106,7 @@
     "action_roles": ["obj_to_be_pulled", "action_verb"],
     "cram_plan": "(perform (an action (type pull-object) (an object (type {obj_to_be_pulled}){obj_to_be_pulled_props})))"
   },
-  "Putting": {
+  "Placing": {
     "action_core": "Placing",
     "action_roles": ["obj_to_be_put", "action_verb", "location"],
     "cram_plan": "(perform (an action (type put-object) (an object (type {obj_to_be_put}){obj_to_be_put_props})(target (a location (on {location}){location_props}))))"
@@ -197,5 +197,19 @@
     "action_core": "Waiting",
     "action_roles": ["unit", "action_verb", "amount"],
     "cram_plan": "(perform (an action (type idle) (count (unit {unit}){unit_props}(number {amount}){amount_props})))"
+  },
+  "Holding": {
+  "action_core": "Holding",
+  "action_roles": ["holder", "held_object", "action_verb", "duration", "manner"],
+  "required_action_roles": ["holder", "held_object", "action_verb"],
+  "cram_plan": "(perform (an action (type hold) (agent (an object (type person.n.01) (role {holder}){holder_props})) (patient (an object (type physical_entity.n.01) (identity {held_object}){held_object_props})) {manner_clause} {duration_clause}))"
+  },
+
+  "Peeling": {
+  "action_core": "Peeling",
+  "action_roles": ["agent", "object", "instrument", "action_verb", "surface"],
+  "required_action_roles": ["agent", "object", "action_verb"],
+  "cram_plan": "(perform (an action (type peel) (agent (an object (type person.n.01) (role {agent}){agent_props})) (patient (an object (type food.n.01) (identity {object}){object_props})) {instrument_clause} {surface_clause}))"
   }
+
 }

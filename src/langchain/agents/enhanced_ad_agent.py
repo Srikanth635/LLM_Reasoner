@@ -12,7 +12,7 @@ from pathlib import Path
 from src.resources.pycram.cram_models import *
 from src.langchain.state_graph import StateModel
 
-action_classes = [Adding,
+action_classes = [Peeling,Adding,
     Arranging,
     Baking,
     Shutting,
@@ -35,7 +35,7 @@ action_classes = [Adding,
     Preheating,
     Pressing,
     Pulling,
-    Putting,
+    Placing,
     Removing,
     Rolling,
     Serving,
@@ -53,7 +53,8 @@ action_classes = [Adding,
     Unscrewing,
     UsingMeasuringCup,
     UsingSpiceJar,
-    Waiting]
+    Waiting,
+    Holding]
 
 # Utility Functions
 def read_json_from_file(filename):
@@ -639,10 +640,16 @@ field_props_prompt_template = """
         "color": "black",
         "edge": "sharp"
       
+    ---
+    
+    In addition to action_roles, you're also prompted with some optional context, use the information from the context to get semantic
+    knowledge for the entities if needed. Context if given should only be used as an add on knowledge. 
     
     Now perform the task for the given, attribute-value action_roles JSON
     
-    action_roles : {action_roles}
+    action_roles : {action_roles} \n
+    
+    context : {context}
     
     /nothink
 """
@@ -761,8 +768,10 @@ def cram_node(state : StateModel):
     print(action_core_attributes)
     print("-"*10)
 
+    context = state.get('context', "")
+    print("fCONTEXT", context)
     chain2 = field_props_prompt | ollama_llm
-    response2 = chain2.invoke({'action_roles' : action_core_attributes})
+    response2 = chain2.invoke({'action_roles' : action_core_attributes, 'context' : context})
     enriched_action_core_attributes = think_remover(response2.content)
     print(enriched_action_core_attributes)
     print("-" * 10)
@@ -791,7 +800,7 @@ def cram_node(state : StateModel):
             'cram_plan_response': cram_plan_response}
 
 
-ad_builder = StateGraph(ADState)
+ad_builder = StateGraph(StateModel)
 ad_builder.add_node("action_node", action_node)
 ad_builder.add_node("cram_node", cram_node)
 # ad_builder.add_node("object_node", object_node)

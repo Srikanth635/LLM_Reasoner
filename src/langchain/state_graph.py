@@ -11,3 +11,4 @@ class StateModel(MessagesState):
     phaser : str
     flanagan : str
     framenet_model : str
+    context: str

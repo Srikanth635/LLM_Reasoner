@@ -161,8 +161,8 @@ class Pulling(BaseModel):
     action_verb: str
     cram_plan: Optional[str] = None
 
-class Putting(BaseModel):
-    """A Pydantic model for the 'Putting' action."""
+class Placing(BaseModel):
+    """A Pydantic model for the 'Placing' action."""
     obj_to_be_put: str
     action_verb: str
     location: Optional[str] = None
@@ -282,4 +282,22 @@ class Waiting(BaseModel):
     unit: Optional[str] = None
     action_verb: Optional[str] = None
     amount: Optional[float] = None
+    cram_plan: Optional[str] = None
+
+class Holding(BaseModel):
+    """A Pydantic model for the 'Holding' action."""
+    holder: str = Field(description="The agent who is performing the holding action")
+    held_object: str = Field(description="The object that is being held")
+    action_verb: str = Field(description="The verb representing the action, e.g., 'hold', 'grasp'")
+    duration: Optional[str] = Field(description="Duration of time the object is held, e.g., '5 seconds', 'briefly'", default=None)
+    manner: Optional[str] = Field(description="The manner in which the object is held, e.g., 'gently', 'firmly'", default=None)
+    cram_plan: Optional[str] = None
+
+class Peeling(BaseModel):
+    """A Pydantic model for the 'Peeling' action."""
+    agent: str = Field(description="The person or agent performing the peeling action")
+    object: str = Field(description="The item being peeled, e.g., 'apple', 'potato'")
+    action_verb: str = Field(description="The verb representing the action, e.g., 'peel'")
+    instrument: Optional[str] = Field(description="The tool used for peeling, e.g., 'knife', 'peeler'", default=None)
+    surface: Optional[str] = Field(description="The surface on which peeling is done, e.g., 'cutting board'", default=None)
     cram_plan: Optional[str] = None

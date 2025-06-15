@@ -1,0 +1,419 @@
+Response:
+In Segment 1, the person picks up a brown onion and places it on a wooden cutting board.
+In Segment 2, the person holds the knife and begins cutting the brown onion on the wooden cutting board.
+In Segment 3, the person continues cutting the brown onion with the knife on the wooden cutting board.
+In Segment 4, the person is still cutting the brown onion with the knife on the wooden cutting board.
+In Segment 5, the person keeps cutting the brown onion with the knife on the wooden cutting board.
+In Segment 6, the person continues cutting the brown onion with the knife on the wooden cutting board.
+In Segment 7, the person is still cutting the brown onion with the knife on the wooden cutting board.
+In Segment 8, the person switches to peeling the skin off the brown onion with the knife on the wooden cutting board.
+In Segment 9, the person continues peeling the skin off the brown onion with the knife on the wooden cutting board.
+In Segment 10, the person switches to peeling the skin off a white onion with their fingers on the wooden cutting board.
+In Segment 11, the person continues peeling the skin off the white onion with their fingers on the wooden cutting board.
+Segment 1: Picking
+Segment 2: Holding
+Segment 3: Cutting
+Segment 4: Cutting
+Segment 5: Cutting
+Segment 6: Cutting
+Segment 7: Cutting
+Segment 8: Peeling
+Segment 9: Peeling
+Segment 10: Peeling
+Segment 11: Peeling
+
+=== Segment 1 ===
+Original: In Segment 1, the person picks up a brown onion and places it on a wooden cutting board.
+Generated JSON:
+ {
+  "component_id": "onion_01",
+  "component_information": {
+    "name": "onion",
+    "id_number": "01",
+    "component_type": "food_item",
+    "shape": "spherical",
+    "size": "medium",
+    "handle": "no",
+    "orientation": "upright",
+    "weight": 1
+  },
+  "executed_action": {
+    "primary_action": {
+      "action_name": "picking_up",
+      "hand": "right_hand"
+    },
+    "secondary_action": {
+      "action_name": "placing",
+      "hand": "right_hand"
+    }
+  },
+  "grasp_descriptor": {
+    "grasp_type": "spherical",
+    "contact_points": "three_fingers",
+    "holding_type": "one_handed",
+    "hand_orientation": "top_to_bottom"
+  },
+  "environmental_factors": {
+    "surface_conditions": "flat_surfaces"
+  }
+}
+
+=== Segment 2 ===
+Original: In Segment 2, the person holds the knife and begins cutting the brown onion on the wooden cutting board.
+Generated JSON:
+ {
+  "component_id": "knife_01",
+  "component_information": {
+    "name": "knife",
+    "id_number": "01",
+    "component_type": "kitchen_object",
+    "shape": "flat",
+    "size": "medium",
+    "handle": "yes",
+    "orientation": "upright",
+    "weight": 1
+  },
+  "executed_action": {
+    "primary_action": {
+      "action_name": "cutting",
+      "hand": "right_hand"
+    },
+    "secondary_action": {
+      "action_name": "holding",
+      "hand": "left_hand"
+    }
+  },
+  "grasp_descriptor": {
+    "grasp_type": "flat",
+    "contact_points": "three_fingers",
+    "holding_type": "one_handed",
+    "hand_orientation": "top_to_bottom"
+  },
+  "environmental_factors": {
+    "surface_conditions": "flat_surfaces"
+  }
+}
+
+=== Segment 3 ===
+Original: In Segment 3, the person continues cutting the brown onion with the knife on the wooden cutting board.
+Generated JSON:
+ {
+  "component_id": "onion_01",
+  "component_information": {
+    "name": "onion",
+    "id_number": "01",
+    "component_type": "food",
+    "shape": "spherical",
+    "size": "medium",
+    "handle": "no",
+    "orientation": "upright",
+    "weight": 2
+  },
+  "executed_action": {
+    "primary_action": {
+      "action_name": "cutting",
+      "hand": "right_hand"
+    },
+    "secondary_action": {
+      "action_name": "holding",
+      "hand": "left_hand"
+    }
+  },
+  "grasp_descriptor": {
+    "grasp_type": "spherical",
+    "contact_points": "three_fingers",
+    "holding_type": "one_handed",
+    "hand_orientation": "top_to_bottom"
+  },
+  "environmental_factors": {
+    "surface_conditions": "flat_surfaces"
+  }
+}
+
+=== Segment 4 ===
+Original: In Segment 4, the person is still cutting the brown onion with the knife on the wooden cutting board.
+Generated JSON:
+ {
+  "component_id": "onion_01",
+  "component_information": {
+    "name": "onion",
+    "id_number": "01",
+    "component_type": "food",
+    "shape": "spherical",
+    "size": "medium",
+    "handle": "no",
+    "orientation": "upright",
+    "weight": 2
+  },
+  "executed_action": {
+    "primary_action": {
+      "action_name": "cutting",
+      "hand": "right_hand"
+    },
+    "secondary_action": {
+      "action_name": "holding",
+      "hand": "left_hand"
+    }
+  },
+  "grasp_descriptor": {
+    "grasp_type": "spherical",
+    "contact_points": "three_fingers",
+    "holding_type": "one_handed",
+    "hand_orientation": "top_to_bottom"
+  },
+  "environmental_factors": {
+    "surface_conditions": "flat_surfaces"
+  }
+}
+
+=== Segment 5 ===
+Original: In Segment 5, the person keeps cutting the brown onion with the knife on the wooden cutting board.
+Generated JSON:
+ {
+  "component_id": "onion_01",
+  "component_information": {
+    "name": "onion",
+    "id_number": "01",
+    "component_type": "food_item",
+    "shape": "spherical",
+    "size": "medium",
+    "handle": "no",
+    "orientation": "flat",
+    "weight": 2
+  },
+  "executed_action": {
+    "primary_action": {
+      "action_name": "cutting",
+      "hand": "right_hand"
+    },
+    "secondary_action": {
+      "action_name": "holding",
+      "hand": "left_hand"
+    }
+  },
+  "grasp_descriptor": {
+    "grasp_type": "spherical",
+    "contact_points": "three_fingers",
+    "holding_type": "one_handed",
+    "hand_orientation": "top_to_bottom"
+  },
+  "environmental_factors": {
+    "surface_conditions": "flat_surfaces"
+  }
+}
+
+=== Segment 6 ===
+Original: In Segment 6, the person continues cutting the brown onion with the knife on the wooden cutting board.
+Generated JSON:
+ {
+  "component_id": "onion_01",
+  "component_information": {
+    "name": "onion",
+    "id_number": "01",
+    "component_type": "food_item",
+    "shape": "spherical",
+    "size": "medium",
+    "handle": "no",
+    "orientation": "upright",
+    "weight": 2
+  },
+  "executed_action": {
+    "primary_action": {
+      "action_name": "cutting",
+      "hand": "right_hand"
+    },
+    "secondary_action": {
+      "action_name": "holding",
+      "hand": "left_hand"
+    }
+  },
+  "grasp_descriptor": {
+    "grasp_type": "spherical",
+    "contact_points": "three_fingers",
+    "holding_type": "one_handed",
+    "hand_orientation": "top_to_bottom"
+  },
+  "environmental_factors": {
+    "surface_conditions": "flat_surfaces"
+  }
+}
+
+=== Segment 7 ===
+Original: In Segment 7, the person is still cutting the brown onion with the knife on the wooden cutting board.
+Generated JSON:
+ {
+  "component_id": "onion_01",
+  "component_information": {
+    "name": "onion",
+    "id_number": "01",
+    "component_type": "food_item",
+    "shape": "spherical",
+    "size": "medium",
+    "handle": "no",
+    "orientation": "upright",
+    "weight": 2
+  },
+  "executed_action": {
+    "primary_action": {
+      "action_name": "cutting",
+      "hand": "right_hand"
+    },
+    "secondary_action": {
+      "action_name": "holding",
+      "hand": "left_hand"
+    }
+  },
+  "grasp_descriptor": {
+    "grasp_type": "spherical",
+    "contact_points": "three_fingers",
+    "holding_type": "one_handed",
+    "hand_orientation": "top_to_bottom"
+  },
+  "environmental_factors": {
+    "surface_conditions": "flat_surfaces"
+  }
+}
+
+=== Segment 8 ===
+Original: In Segment 8, the person switches to peeling the skin off the brown onion with the knife on the wooden cutting board.
+Generated JSON:
+ {
+  "component_id": "onion_01",
+  "component_information": {
+    "name": "onion",
+    "id_number": "01",
+    "component_type": "food_item",
+    "shape": "spherical",
+    "size": "medium",
+    "handle": "no",
+    "orientation": "upright",
+    "weight": 1
+  },
+  "executed_action": {
+    "primary_action": {
+      "action_name": "peeling",
+      "hand": "right_hand"
+    },
+    "secondary_action": {
+      "action_name": "holding",
+      "hand": "left_hand"
+    }
+  },
+  "grasp_descriptor": {
+    "grasp_type": "spherical",
+    "contact_points": "fingers",
+    "holding_type": "one_handed",
+    "hand_orientation": "top_to_bottom"
+  },
+  "environmental_factors": {
+    "surface_conditions": "flat_surfaces"
+  }
+}
+
+=== Segment 9 ===
+Original: In Segment 9, the person continues peeling the skin off the brown onion with the knife on the wooden cutting board.
+Generated JSON:
+ {
+  "component_id": "onion_01",
+  "component_information": {
+    "name": "onion",
+    "id_number": "01",
+    "component_type": "food_item",
+    "shape": "spherical",
+    "size": "medium",
+    "handle": "no",
+    "orientation": "upright",
+    "weight": 1
+  },
+  "executed_action": {
+    "primary_action": {
+      "action_name": "peeling",
+      "hand": "right_hand"
+    },
+    "secondary_action": {
+      "action_name": "holding",
+      "hand": "left_hand"
+    }
+  },
+  "grasp_descriptor": {
+    "grasp_type": "spherical",
+    "contact_points": "fingers_and_palms",
+    "holding_type": "one_handed",
+    "hand_orientation": "top_to_bottom"
+  },
+  "environmental_factors": {
+    "surface_conditions": "flat_surfaces"
+  }
+}
+
+=== Segment 10 ===
+Original: In Segment 10, the person switches to peeling the skin off a white onion with their fingers on the wooden cutting board.
+Generated JSON:
+ {
+  "component_id": "onion_01",
+  "component_information": {
+    "name": "onion",
+    "id_number": "01",
+    "component_type": "food_item",
+    "shape": "spherical",
+    "size": "medium",
+    "handle": "no",
+    "orientation": "upright",
+    "weight": 1
+  },
+  "executed_action": {
+    "primary_action": {
+      "action_name": "peeling",
+      "hand": "right_hand"
+    },
+    "secondary_action": {
+      "action_name": "holding",
+      "hand": "left_hand"
+    }
+  },
+  "grasp_descriptor": {
+    "grasp_type": "spherical",
+    "contact_points": "fingers",
+    "holding_type": "one_handed",
+    "hand_orientation": "top_to_bottom"
+  },
+  "environmental_factors": {
+    "surface_conditions": "flat_surfaces"
+  }
+}
+
+=== Segment 11 ===
+Original: In Segment 11, the person continues peeling the skin off the white onion with their fingers on the wooden cutting board.
+Generated JSON:
+ {
+  "component_id": "onion_01",
+  "component_information": {
+    "name": "onion",
+    "id_number": "01",
+    "component_type": "food_item",
+    "shape": "spherical",
+    "size": "medium",
+    "handle": "no",
+    "orientation": "upright",
+    "weight": 1
+  },
+  "executed_action": {
+    "primary_action": {
+      "action_name": "peeling",
+      "hand": "right_hand"
+    },
+    "secondary_action": {
+      "action_name": "holding",
+      "hand": "left_hand"
+    }
+  },
+  "grasp_descriptor": {
+    "grasp_type": "spherical",
+    "contact_points": "fingers",
+    "holding_type": "one_handed",
+    "hand_orientation": "top_to_bottom"
+  },
+  "environmental_factors": {
+    "surface_conditions": "flat_surfaces"
+  }
+}
