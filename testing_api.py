@@ -12,5 +12,9 @@ data = {
     'human_comment': human_comment_str
 }
 
-response = requests.post(url, json=data)  # or data=data for form-data
+data1 = {
+    'instruction': "pick the cup from the table"
+}
+
+response = requests.post(url, json=data1)  # or data=data for form-data
 print(response.json())
