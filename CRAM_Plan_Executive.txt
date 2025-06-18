@@ -1,0 +1,753 @@
+Starting interactive conversation. Type 'exit' to end.
+Response:
+In Segment 1, the person begins preparing for a task by gathering a box of Cheez-It crackers, a red bowl, a red cup, and a bottle of mustard, likely to create a snack or dish.  
+In Segment 2, the person approaches the box of Cheez-It crackers to open it, signaling the start of the pouring task.  
+In Segment 3, the person grasps the box of Cheez-It crackers with both hands, holding it steady on the table as part of the grasping phase.  
+In Segment 4, the person begins grasping-and-moving the box of Cheez-It crackers, pouring them into the red bowl while the red cup and mustard are ready for use.  
+In Segment 5, the person continues pouring Cheez-It crackers into the red bowl, maintaining the grasp-and-move phase as they prepare the snack.  
+In Segment 6, the person refines the pouring motion, ensuring the crackers are evenly distributed into the bowl while the other items remain in place.  
+In Segment 7, the person adjusts the pouring technique, carefully transferring the crackers into the bowl as part of the grasp-and-move phase.  
+In Segment 8, the person completes the pouring action, moving the box away from the bowl as the grasp-and-move phase concludes.  
+In Segment 9, the person prepares to release the box of Cheez-It crackers, signaling the final phase of the task.  
+In Segment 10, the person positions the box for release, ensuring the crackers are fully poured into the bowl before completing the task.  
+In Segment 11, the person releases the box of Cheez-It crackers, finishing the pouring task and leaving the red bowl, cup, and mustard ready for the final snack preparation.
+Segment 1: Preparing
+Segment 2: Approaching
+Segment 3: Taking
+Segment 4: Taking
+Segment 5: Pouring
+Segment 6: Pouring
+Segment 7: Pouring
+Segment 8: Pouring
+Segment 9: Preparing
+Segment 10: Pouring
+Segment 11: Releasing
+
+=== Segment 1 ===
+Original: In Segment 1, the person begins preparing for a task by gathering a box of Cheez-It crackers, a red bowl, a red cup, and a bottle of mustard, likely to create a snack or dish.  
+Generated JSON:
+ {
+  "action_designator": {
+    "action_frame": {
+      "id": "act_seg_001",
+      "type": "gathering",
+      "agent": "human",
+      "goal": "gather_supplies",
+      "temporal_phase": "in_progress"
+    },
+    "manipulation": {
+      "right_hand": {
+        "role": "executing",
+        "action": "pick_up",
+        "grasp": {
+          "type": "precision",
+          "contact_points": "index_finger",
+          "holding_type": "object_grip"
+        },
+        "rotation_vector": [0.0, 0.0, 0.0, 1.0],
+        "object": {
+          "id": "crackers_01",
+          "name": "crackers",
+          "shape": "flat",
+          "handle": false,
+          "weight": 0.2,
+          "affordances": ["graspable", "container_open"],
+          "rotation_vector": [0.0, 0.0, 0.0, 1.0]
+        }
+      },
+      "left_hand": {
+        "role": "supporting",
+        "action": "hold",
+        "grasp": {
+          "type": "enclosing",
+          "contact_points": "full_palm",
+          "holding_type": "support_grip"
+        },
+        "rotation_vector": [0.0, 0.0, 0.0, 1.0],
+        "object": {
+          "id": "bowl_01",
+          "name": "bowl",
+          "shape": "round",
+          "handle": false,
+          "weight": 2,
+          "affordances": ["holdable", "container_open"],
+          "rotation_vector": [0.0, 0.0, 0.0, 1.0]
+        }
+      }
+    },
+    "environment_context": {
+      "support_surface": "tabletop",
+      "environment_state": "stationary",
+      "precondition": [
+        "on(crackers_01, tabletop)",
+        "on(bowl_01, tabletop)",
+        "on(cup_01, tabletop)",
+        "on(bottle_01, tabletop)"
+      ],
+      "effects": [
+        "object_grasped",
+        "object_held",
+        "supplies_collected"
+      ]
+    }
+  }
+}
+
+=== Segment 2 ===
+Original: In Segment 2, the person approaches the box of Cheez-It crackers to open it, signaling the start of the pouring task.  
+Generated JSON:
+ {
+  "action_designator": {
+    "action_frame": {
+      "id": "act_seg_002",
+      "type": "opening",
+      "agent": "human",
+      "goal": "open_container",
+      "temporal_phase": "in_progress"
+    },
+    "manipulation": {
+      "right_hand": {
+        "role": "executing",
+        "action": "open",
+        "grasp": {
+          "type": "precision",
+          "contact_points": "index_finger",
+          "holding_type": "tool_grip"
+        },
+        "rotation_vector": [0.0, 0.707, 0.0, 0.707],
+        "object": {
+          "id": "cheez_it_box_01",
+          "name": "cheez_it_box",
+          "shape": "rectangular",
+          "handle": false,
+          "weight": 0.3,
+          "affordances": ["graspable", "openable"],
+          "rotation_vector": [0.0, 0.707, 0.0, 0.707]
+        }
+      },
+      "left_hand": {
+        "role": "supporting",
+        "action": "hold",
+        "grasp": {
+          "type": "enclosing",
+          "contact_points": "full_palm",
+          "holding_type": "support_grip"
+        },
+        "rotation_vector": [0.0, 0.0, 0.0, 1.0],
+        "object": {}
+      }
+    },
+    "environment_context": {
+      "support_surface": "tabletop",
+      "environment_state": "stationary",
+      "precondition": [
+        "on(cheez_it_box_01, tabletop)",
+        "hand_holding(right_hand, cheez_it_box_01)"
+      ],
+      "effects": [
+        "container_opened",
+        "object_stable",
+        "tool_used"
+      ]
+    }
+  }
+}
+
+=== Segment 3 ===
+Original: In Segment 3, the person grasps the box of Cheez-It crackers with both hands, holding it steady on the table as part of the grasping phase.  
+Generated JSON:
+ {
+  "action_designator": {
+    "action_frame": {
+      "id": "act_seg_003",
+      "type": "grasping",
+      "agent": "human",
+      "goal": "hold_box_steady",
+      "temporal_phase": "preparation"
+    },
+    "manipulation": {
+      "right_hand": {
+        "role": "executing",
+        "action": "grasp",
+        "grasp": {
+          "type": "enclosing",
+          "contact_points": "full_palm",
+          "holding_type": "support_grip"
+        },
+        "rotation_vector": [0.0, 0.0, 0.0, 1.0],
+        "object": {
+          "id": "box_01",
+          "name": "box",
+          "shape": "rectangular",
+          "handle": false,
+          "weight": 0.8,
+          "affordances": ["graspable", "holdable"],
+          "rotation_vector": [0.0, 0.0, 0.0, 1.0]
+        }
+      },
+      "left_hand": {
+        "role": "supporting",
+        "action": "grasp",
+        "grasp": {
+          "type": "enclosing",
+          "contact_points": "full_palm",
+          "holding_type": "support_grip"
+        },
+        "rotation_vector": [0.0, 0.0, 0.0, 1.0],
+        "object": {}
+      }
+    },
+    "environment_context": {
+      "support_surface": "tabletop",
+      "environment_state": "stationary",
+      "precondition": [
+        "on(box_01, tabletop)",
+        "hand_holding(right_hand, box_01)",
+        "hand_holding(left_hand, box_01)"
+      ],
+      "effects": [
+        "object_stable",
+        "grasp_complete"
+      ]
+    }
+  }
+}
+
+=== Segment 4 ===
+Original: In Segment 4, the person begins grasping-and-moving the box of Cheez-It crackers, pouring them into the red bowl while the red cup and mustard are ready for use.  
+Generated JSON:
+ {
+  "action_designator": {
+    "action_frame": {
+      "id": "act_seg_004",
+      "type": "pouring",
+      "agent": "human",
+      "goal": "transfer_crackers_to_bowl",
+      "temporal_phase": "in_progress"
+    },
+    "manipulation": {
+      "right_hand": {
+        "role": "executing",
+        "action": "pour",
+        "grasp": {
+          "type": "precision",
+          "contact_points": "index_finger_and_thumb",
+          "holding_type": "tool_grip"
+        },
+        "rotation_vector": [0.0, 0.707, 0.0, 0.707],
+        "object": {
+          "id": "cheez_it_box_01",
+          "name": "cheez_it_box",
+          "shape": "rectangular",
+          "handle": true,
+          "weight": 0.3,
+          "affordances": ["graspable", "container", "pourable"],
+          "rotation_vector": [0.0, 0.707, 0.0, 0.707]
+        }
+      },
+      "left_hand": {
+        "role": "supporting",
+        "action": "hold",
+        "grasp": {
+          "type": "enclosing",
+          "contact_points": "full_palm",
+          "holding_type": "support_grip"
+        },
+        "rotation_vector": [0.0, 0.0, 0.0, 1.0],
+        "object": {
+          "id": "red_bowl_01",
+          "name": "red_bowl",
+          "shape": "round",
+          "handle": false,
+          "weight": 1.5,
+          "affordances": ["holdable", "container", "pourable"],
+          "rotation_vector": [0.0, 0.0, 0.0, 1.0]
+        }
+      }
+    },
+    "environment_context": {
+      "support_surface": "tabletop",
+      "environment_state": "stationary",
+      "precondition": [
+        "on(cheez_it_box_01, tabletop)",
+        "on(red_bowl_01, tabletop)",
+        "hand_holding(right_hand, cheez_it_box_01)",
+        "hand_holding(left_hand, red_bowl_01)"
+      ],
+      "effects": [
+        "crackers_transferred",
+        "object_stable",
+        "tool_used"
+      ]
+    }
+  }
+}
+
+=== Segment 5 ===
+Original: In Segment 5, the person continues pouring Cheez-It crackers into the red bowl, maintaining the grasp-and-move phase as they prepare the snack.  
+Generated JSON:
+ {
+  "action_designator": {
+    "action_frame": {
+      "id": "act_seg_005",
+      "type": "pouring",
+      "agent": "human",
+      "goal": "pour_cheez_it_into_bowl",
+      "temporal_phase": "in_progress"
+    },
+    "manipulation": {
+      "right_hand": {
+        "role": "executing",
+        "action": "pour",
+        "grasp": {
+          "type": "precision",
+          "contact_points": "index_finger_and_thumb",
+          "holding_type": "tool_grip"
+        },
+        "rotation_vector": [0.0, 0.707, 0.0, 0.707],
+        "object": {
+          "id": "cheez_it_01",
+          "name": "cheez_it",
+          "shape": "flat",
+          "handle": false,
+          "weight": 0.1,
+          "affordances": ["graspable", "pourable"],
+          "rotation_vector": [0.0, 0.707, 0.0, 0.707]
+        }
+      },
+      "left_hand": {
+        "role": "supporting",
+        "action": "hold",
+        "grasp": {
+          "type": "enclosing",
+          "contact_points": "full_palm",
+          "holding_type": "support_grip"
+        },
+        "rotation_vector": [0.0, 0.0, 0.0, 1.0],
+        "object": {
+          "id": "bowl_01",
+          "name": "bowl",
+          "shape": "round",
+          "handle": false,
+          "weight": 2,
+          "affordances": ["holdable", "pourable"],
+          "rotation_vector": [0.0, 0.0, 0.0, 1.0]
+        }
+      }
+    },
+    "environment_context": {
+      "support_surface": "tabletop",
+      "environment_state": "stationary",
+      "precondition": [
+        "on(cheez_it_01, tabletop)",
+        "hand_holding(right_hand, cheez_it_01)",
+        "hand_holding(left_hand, bowl_01)"
+      ],
+      "effects": [
+        "pouring_complete",
+        "object_stable",
+        "snack_prepared"
+      ]
+    }
+  }
+}
+
+=== Segment 6 ===
+Original: In Segment 6, the person refines the pouring motion, ensuring the crackers are evenly distributed into the bowl while the other items remain in place.  
+Generated JSON:
+ {
+  "action_designator": {
+    "action_frame": {
+      "id": "act_seg_006",
+      "type": "pouring",
+      "agent": "human",
+      "goal": "evenly_distribute_crackers",
+      "temporal_phase": "in_progress"
+    },
+    "manipulation": {
+      "right_hand": {
+        "role": "executing",
+        "action": "pour",
+        "grasp": {
+          "type": "precision",
+          "contact_points": "index_finger_and_thumb",
+          "holding_type": "tool_grip"
+        },
+        "rotation_vector": [0.0, 0.707, 0.0, 0.707],
+        "object": {
+          "id": "cracker_01",
+          "name": "cracker",
+          "shape": "flat",
+          "handle": false,
+          "weight": 0.05,
+          "affordances": ["graspable", "pourable"],
+          "rotation_vector": [0.0, 0.707, 0.0, 0.707]
+        }
+      },
+      "left_hand": {
+        "role": "supporting",
+        "action": "hold",
+        "grasp": {
+          "type": "enclosing",
+          "contact_points": "full_palm",
+          "holding_type": "support_grip"
+        },
+        "rotation_vector": [0.0, 0.0, 0.0, 1.0],
+        "object": {
+          "id": "bowl_01",
+          "name": "bowl",
+          "shape": "round",
+          "handle": false,
+          "weight": 2,
+          "affordances": ["holdable", "container"],
+          "rotation_vector": [0.0, 0.0, 0.0, 1.0]
+        }
+      }
+    },
+    "environment_context": {
+      "support_surface": "tabletop",
+      "environment_state": "stationary",
+      "precondition": [
+        "on(bowl_01, tabletop)",
+        "hand_holding(left_hand, bowl_01)",
+        "hand_holding(right_hand, cracker_01)"
+      ],
+      "effects": [
+        "even_distribution",
+        "object_stable",
+        "pouring_complete"
+      ]
+    }
+  }
+}
+
+=== Segment 7 ===
+Original: In Segment 7, the person adjusts the pouring technique, carefully transferring the crackers into the bowl as part of the grasp-and-move phase.  
+Generated JSON:
+ {
+  "action_designator": {
+    "action_frame": {
+      "id": "act_seg_007",
+      "type": "pouring",
+      "agent": "human",
+      "goal": "transfer_crackers",
+      "temporal_phase": "in_progress"
+    },
+    "manipulation": {
+      "right_hand": {
+        "role": "executing",
+        "action": "pour",
+        "grasp": {
+          "type": "precision",
+          "contact_points": "index_finger",
+          "holding_type": "tool_grip"
+        },
+        "rotation_vector": [0.0, 0.707, 0.0, 0.707],
+        "object": {
+          "id": "cracker_01",
+          "name": "cracker",
+          "shape": "flat",
+          "handle": false,
+          "weight": 0.05,
+          "affordances": ["graspable", "pourable"],
+          "rotation_vector": [0.0, 0.707, 0.0, 0.707]
+        }
+      },
+      "left_hand": {
+        "role": "supporting",
+        "action": "hold",
+        "grasp": {
+          "type": "enclosing",
+          "contact_points": "full_palm",
+          "holding_type": "support_grip"
+        },
+        "rotation_vector": [0.0, 0.0, 0.0, 1.0],
+        "object": {
+          "id": "bowl_01",
+          "name": "bowl",
+          "shape": "round",
+          "handle": false,
+          "weight": 2,
+          "affordances": ["holdable", "pourable"],
+          "rotation_vector": [0.0, 0.0, 0.0, 1.0]
+        }
+      }
+    },
+    "environment_context": {
+      "support_surface": "tabletop",
+      "environment_state": "stationary",
+      "precondition": [
+        "on(bowl_01, tabletop)",
+        "hand_holding(left_hand, bowl_01)",
+        "hand_holding(right_hand, cracker_01)"
+      ],
+      "effects": [
+        "crackers_transferred",
+        "object_stable",
+        "pouring_complete"
+      ]
+    }
+  }
+}
+
+=== Segment 8 ===
+Original: In Segment 8, the person completes the pouring action, moving the box away from the bowl as the grasp-and-move phase concludes.  
+Generated JSON:
+ {
+  "action_designator": {
+    "action_frame": {
+      "id": "act_seg_008",
+      "type": "pouring",
+      "agent": "human",
+      "goal": "pour_liquid",
+      "temporal_phase": "completed"
+    },
+    "manipulation": {
+      "right_hand": {
+        "role": "executing",
+        "action": "pour",
+        "grasp": {
+          "type": "precision",
+          "contact_points": "index_finger_and_thumb",
+          "holding_type": "tool_grip"
+        },
+        "rotation_vector": [0.0, 0.707, 0.0, 0.707],
+        "object": {
+          "id": "container_01",
+          "name": "container",
+          "shape": "cylindrical",
+          "handle": true,
+          "weight": 0.8,
+          "affordances": ["graspable", "pouring_tool"],
+          "rotation_vector": [0.0, 0.707, 0.0, 0.707]
+        }
+      },
+      "left_hand": {
+        "role": "supporting",
+        "action": "hold",
+        "grasp": {
+          "type": "enclosing",
+          "contact_points": "full_palm",
+          "holding_type": "support_grip"
+        },
+        "rotation_vector": [0.0, 0.0, 0.0, 1.0],
+        "object": {
+          "id": "bowl_01",
+          "name": "bowl",
+          "shape": "round",
+          "handle": false,
+          "weight": 2,
+          "affordances": ["holdable", "pourable"],
+          "rotation_vector": [0.0, 0.0, 0.0, 1.0]
+        }
+      }
+    },
+    "environment_context": {
+      "support_surface": "tabletop",
+      "environment_state": "stationary",
+      "precondition": [
+        "on(bowl_01, tabletop)",
+        "hand_holding(left_hand, bowl_01)",
+        "hand_holding(right_hand, container_01)"
+      ],
+      "effects": [
+        "liquid_poured",
+        "object_stable",
+        "tool_used"
+      ]
+    }
+  }
+}
+
+=== Segment 9 ===
+Original: In Segment 9, the person prepares to release the box of Cheez-It crackers, signaling the final phase of the task.  
+Generated JSON:
+ {
+  "action_designator": {
+    "action_frame": {
+      "id": "act_seg_009",
+      "type": "releasing",
+      "agent": "human",
+      "goal": "release_box",
+      "temporal_phase": "final_phase"
+    },
+    "manipulation": {
+      "right_hand": {
+        "role": "executing",
+        "action": "release",
+        "grasp": {
+          "type": "loose",
+          "contact_points": "thumb_and_index_finger",
+          "holding_type": "grasp_release"
+        },
+        "rotation_vector": [0.0, 0.0, 0.0, 1.0],
+        "object": {
+          "id": "box_01",
+          "name": "box",
+          "shape": "rectangular",
+          "handle": true,
+          "weight": 0.3,
+          "affordances": ["graspable", "releaseable"],
+          "rotation_vector": [0.0, 0.0, 0.0, 1.0]
+        }
+      },
+      "left_hand": {
+        "role": "none",
+        "action": "none",
+        "grasp": {
+          "type": "none",
+          "contact_points": "none",
+          "holding_type": "none"
+        },
+        "rotation_vector": [0.0, 0.0, 0.0, 1.0],
+        "object": {}
+      }
+    },
+    "environment_context": {
+      "support_surface": "tabletop",
+      "environment_state": "stationary",
+      "precondition": [
+        "on(box_01, tabletop)",
+        "hand_holding(right_hand, box_01)"
+      ],
+      "effects": [
+        "object_released",
+        "task_complete",
+        "object_stable"
+      ]
+    }
+  }
+}
+
+=== Segment 10 ===
+Original: In Segment 10, the person positions the box for release, ensuring the crackers are fully poured into the bowl before completing the task.  
+Generated JSON:
+ {
+  "action_designator": {
+    "action_frame": {
+      "id": "act_seg_10",
+      "type": "pouring",
+      "agent": "human",
+      "goal": "pour_crackers_into_bowl",
+      "temporal_phase": "in_progress"
+    },
+    "manipulation": {
+      "right_hand": {
+        "role": "executing",
+        "action": "pour",
+        "grasp": {
+          "type": "precision",
+          "contact_points": "index_finger_and_thumb",
+          "holding_type": "tool_grip"
+        },
+        "rotation_vector": [0.0, 0.707, 0.0, 0.707],
+        "object": {
+          "id": "box_01",
+          "name": "box",
+          "shape": "rectangular",
+          "handle": true,
+          "weight": 1.2,
+          "affordances": ["graspable", "container"],
+          "rotation_vector": [0.0, 0.707, 0.0, 0.707]
+        }
+      },
+      "left_hand": {
+        "role": "supporting",
+        "action": "hold",
+        "grasp": {
+          "type": "enclosing",
+          "contact_points": "full_palm",
+          "holding_type": "support_grip"
+        },
+        "rotation_vector": [0.0, 0.0, 0.0, 1.0],
+        "object": {
+          "id": "bowl_01",
+          "name": "bowl",
+          "shape": "round",
+          "handle": false,
+          "weight": 2,
+          "affordances": ["holdable", "container"],
+          "rotation_vector": [0.0, 0.0, 0.0, 1.0]
+        }
+      }
+    },
+    "environment_context": {
+      "support_surface": "tabletop",
+      "environment_state": "stationary",
+      "precondition": [
+        "on(box_01, tabletop)",
+        "on(bowl_01, tabletop)",
+        "hand_holding(right_hand, box_01)",
+        "hand_holding(left_hand, bowl_01)"
+      ],
+      "effects": [
+        "crackers_poured_into_bowl",
+        "object_stable",
+        "task_complete"
+      ]
+    }
+  }
+}
+
+=== Segment 11 ===
+Original: In Segment 11, the person releases the box of Cheez-It crackers, finishing the pouring task and leaving the red bowl, cup, and mustard ready for the final snack preparation.
+Generated JSON:
+ {
+  "action_designator": {
+    "action_frame": {
+      "id": "act_seg_11",
+      "type": "pouring",
+      "agent": "human",
+      "goal": "finish_pouring",
+      "temporal_phase": "completed"
+    },
+    "manipulation": {
+      "right_hand": {
+        "role": "releasing",
+        "action": "release",
+        "grasp": {
+          "type": "precision",
+          "contact_points": "index_finger",
+          "holding_type": "tool_grip"
+        },
+        "rotation_vector": [0.0, 0.0, 0.0, 1.0],
+        "object": {
+          "id": "cheez_it_box_01",
+          "name": "cheez_it_box",
+          "shape": "rectangular",
+          "handle": true,
+          "weight": 0.3,
+          "affordances": ["graspable", "container"],
+          "rotation_vector": [0.0, 0.0, 0.0, 1.0]
+        }
+      },
+      "left_hand": {
+        "role": "none",
+        "action": "none",
+        "grasp": {
+          "type": "none",
+          "contact_points": "none",
+          "holding_type": "none"
+        },
+        "rotation_vector": [0.0, 0.0, 0.0, 1.0],
+        "object": {}
+      }
+    },
+    "environment_context": {
+      "support_surface": "tabletop",
+      "environment_state": "stationary",
+      "precondition": [
+        "on(cheez_it_box_01, tabletop)",
+        "hand_holding(right_hand, cheez_it_box_01)",
+        "on(red_bowl_01, tabletop)",
+        "on(cup_01, tabletop)",
+        "on(mustard_01, tabletop)"
+      ],
+      "effects": [
+        "object_released",
+        "task_complete",
+        "object_ready"
+      ]
+    }
+  }
+}

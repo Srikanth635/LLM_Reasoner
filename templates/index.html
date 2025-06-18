@@ -3,9 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Four Windows Data Display</title>
+    <title>Designator Data Display</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            /* Presentation Light Color Palette */
+            --bg-main: #F3F4F6;
+            --bg-gradient-end: #E5E7EB;
+            --panel-bg: #FFFFFF;
+            --panel-border: #E5E7EB;
+            --card-bg: #FFFFFF;
+            --card-border: #F3F4F6;
+            --text-primary: #1F2937;
+            --text-secondary: #6B7280;
+            --text-on-accent: #FFFFFF;
+            --accent: #3B82F6;
+            --accent-dark: #2563EB;
+            /* High-Contrast JSON Colors */
+            --json-key: #0B749B;
+            --json-string: #228B22;
+            --json-number: #9932CC;
+            --json-boolean: #D2691E;
+            --json-null: #EF4444;
+            --json-bracket: #4B5563;
+            --json-guide: #D1D5DB;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -13,66 +39,68 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-main) 0%, var(--bg-gradient-end) 100%);
             min-height: 100vh;
-            padding: 20px;
-            color: white;
+            padding: 30px;
+            color: var(--text-primary);
         }
 
         .container {
             max-width: 1600px;
             margin: 0 auto;
             display: flex;
-            height: calc(95vh - 80px); /* Adjusted for header */
+            height: calc(100vh - 100px);
+            gap: 30px;
         }
 
         h1 {
             text-align: center;
-            margin-bottom: 20px;
-            font-size: 2.5rem;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            margin-bottom: 40px;
+            font-size: 2.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -0.02em;
         }
 
-        /* Tab navigation styles */
         .tab-navigation {
             display: flex;
             flex-direction: column;
-            width: 250px;
+            width: 260px;
             flex-shrink: 0;
             gap: 10px;
-            margin-right: 20px;
         }
 
         .tab-button {
-            background: rgba(255, 255, 255, 0.2);
-            border: 1px solid rgba(255,255,255,0.3);
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
             border-radius: 10px;
             padding: 15px 20px;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease-in-out;
             text-align: left;
-            font-size: 1.1rem;
+            font-size: 1rem;
             font-weight: 500;
-            color: white;
+            color: var(--text-secondary);
             display: flex;
             justify-content: space-between;
             align-items: center;
+            box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05);
         }
 
         .tab-button:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: translateX(5px);
+            border-color: var(--accent);
+            color: var(--accent);
         }
 
         .tab-button.active {
-            background: rgba(255, 255, 255, 0.95);
-            color: #333;
-            font-weight: bold;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            background: var(--accent);
+            color: var(--text-on-accent);
+            font-weight: 600;
+            border-color: var(--accent);
+            transform: scale(1.02);
         }
 
-        /* Main content area for the single window */
         .content-area {
             flex-grow: 1;
             display: flex;
@@ -80,209 +108,190 @@
         }
 
         .window {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            border: 1px solid rgba(255,255,255,0.3);
             overflow: hidden;
-            display: flex;
-            flex-direction: column;
+            display: none;
             width: 100%;
-            display: none; /* Hide all windows by default */
         }
 
         .window.active {
-            display: flex; /* Show only the active window */
-        }
-
-        .window-header {
-            border-bottom: 2px solid #e0e0e0;
-            padding: 20px;
-            margin-bottom: 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .window-title {
-            font-size: 1.8rem;
-            font-weight: bold;
-            color: #333;
-        }
-
-        .status-indicator {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: #28a745;
-            animation: pulse 2s infinite;
-            flex-shrink: 0;
-        }
-
-        .status-indicator.inactive {
-            background: #dc3545;
-            animation: none;
-        }
-
-        .tab-button .status-indicator {
-             background-color: #f0f0f0;
-        }
-        .tab-button.active .status-indicator {
-             background-color: #28a745;
-        }
-        .tab-button .status-indicator.inactive {
-            background: #e67e88;
-        }
-        .tab-button.active .status-indicator.inactive {
-            background: #dc3545;
-        }
-
-
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.5; }
-            100% { opacity: 1; }
+            display: block;
         }
 
         .window-content {
-            flex: 1;
+            height: 100%;
             overflow-y: auto;
-            padding: 20px;
+            padding: 5px 15px 5px 5px;
         }
-        
-        /* Data Entry and JSON Viewer Styles */
+
         .data-entry {
-            background: #f8f9fa;
-            border: 1px solid #e9ecef;
-            border-radius: 8px;
-            padding: 15px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
             margin-bottom: 15px;
-            transition: all 0.3s ease;
             position: relative;
-            overflow-wrap: break-word;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -2px rgba(0,0,0,0.05);
         }
 
-        .data-entry:hover {
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            transform: translateY(-2px);
+        .entry-controls {
+            padding: 8px 12px;
+            background-color: #F9FAFB;
+            text-align: right;
+            border-bottom: 1px solid var(--panel-border);
         }
 
-        .data-entry.new {
-            animation: slideIn 0.5s ease-out;
-            border-left: 4px solid #007bff;
+        .toggle-all-btn {
+            background-color: #E5E7EB;
+            color: #374151;
+            border: 1px solid #D1D5DB;
+            padding: 4px 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
         }
-
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateX(-20px); }
-            to { opacity: 1; transform: translateX(0); }
+        .toggle-all-btn:hover {
+            background-color: #D1D5DB;
+            border-color: #9CA3AF;
         }
-        
-        /* .timestamp style removed */
 
         .data-content {
-            color: #333;
-            line-height: 1.5;
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding: 15px;
         }
 
         .json-viewer {
-            background: #f8f9fa;
-            border: 1px solid #e9ecef;
-            border-radius: 5px;
-            font-family: 'Courier New', monospace;
-            font-size: 0.9rem;
-            overflow-x: auto;
-            padding: 10px;
+            font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+            font-size: 0.95rem;
         }
-        
-        .json-container { display: block; }
-        .json-line { display: block; padding: 2px 0; white-space: pre-wrap; word-wrap: break-word; }
-        .json-line:hover { background-color: #f0f0f0; }
-        .json-key { color: #0451a5; font-weight: bold; }
-        .json-string { color: #008000; }
-        .json-number { color: #098658; }
-        .json-boolean { color: #0000ff; }
-        .json-null { color: #808080; }
-        .json-bracket { color: #333; font-weight: bold; }
-        .expand-icon { cursor: pointer; user-select: none; width: 16px; height: 16px; display: inline-flex; align-items: center; justify-content: center; margin-right: 5px; font-size: 12px; color: #666; transition: transform 0.2s ease; vertical-align: middle; }
-        .expand-icon:hover { color: #333; background-color: #e9ecef; border-radius: 3px; }
+
+        .json-line {
+            padding: 2px 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .json-key { color: var(--json-key); font-weight: bold; }
+        .json-string { color: var(--json-string); }
+        .json-number { color: var(--json-number); }
+        .json-boolean { color: var(--json-boolean); }
+        .json-null { color: var(--json-null); font-weight: bold; }
+        .json-bracket { color: var(--json-bracket); }
+
+        .expand-icon {
+            display: inline-flex;
+            cursor: pointer;
+            user-select: none;
+            width: 14px;
+            height: 14px;
+            align-items: center;
+            justify-content: center;
+            margin-right: 8px;
+            font-size: 10px;
+            color: var(--text-secondary);
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+            border-radius: 4px;
+        }
+        .expand-icon:hover { color: var(--text-primary); background-color: #E5E7EB; }
         .expand-icon.expanded { transform: rotate(90deg); }
-        .json-children { display: none; margin-left: 20px; }
+
+        .json-children {
+            display: none;
+            margin-left: 12px;
+            padding-left: 12px;
+            border-left: 1px dotted var(--json-guide);
+        }
         .json-children.expanded { display: block; }
-        .json-ellipsis { color: #666; font-style: italic; }
-        .json-collapsed-preview { display: inline; }
+
+        .json-ellipsis { color: var(--text-secondary); font-style: italic; }
+        .json-collapsed-preview { display: block; }
         .json-expanded-content { display: none; }
         .json-expanded-content.expanded { display: block; }
-        .no-data { text-align: center; color: #6c757d; font-style: italic; margin-top: 50px; }
+        .json-collapsed-preview[style*="display: none;"] { display: none !important; }
 
+        /* Style for the special cram_plan view */
+        .cram-plan-view {
+            background-color: #F3F4F6;
+            border: 1px solid #E5E7EB;
+            border-radius: 6px;
+            padding: 10px;
+            color: #1E40AF; /* A strong, dark blue for code */
+            font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+            font-size: 0.9rem;
+            white-space: pre;
+            word-wrap: break-word;
+            margin: 4px 0;
+        }
+
+        .no-data { text-align: center; color: var(--text-secondary); font-style: italic; margin-top: 50px; }
 
         .test-controls {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: rgba(255,255,255,0.9);
-            padding: 20px;
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            padding: 15px;
             border-radius: 10px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
-            backdrop-filter: blur(10px);
-            color: #333;
+            margin-top: auto;
+            padding-top: 20px;
+        }
+        .test-controls h4 {
+            color: var(--text-primary);
+            margin-bottom: 10px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .trigger-wrapper {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
         }
 
         .test-button {
-            background: #007bff;
-            color: white;
+            background: var(--accent);
+            color: var(--text-on-accent);
             border: none;
-            padding: 8px 15px;
-            margin: 3px;
-            border-radius: 5px;
+            padding: 9px 15px;
+            border-radius: 8px;
             cursor: pointer;
             font-size: 0.9rem;
-            transition: background 0.3s ease;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            flex-grow: 1;
+            text-align: center;
         }
 
         .test-button:hover {
-            background: #0056b3;
+            background: var(--accent-dark);
         }
 
-        /* Scrollbar styling */
-        .window-content::-webkit-scrollbar { width: 6px; }
-        .window-content::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 3px; }
-        .window-content::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 3px; }
-        .window-content::-webkit-scrollbar-thumb:hover { background: #a1a1a1; }
-        
-        /* Loading Spinner Styles */
-        #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(255,255,255,0.7); z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
-        .spinner { width: 60px; height: 60px; border: 8px solid #ccc; border-top: 8px solid #007bff; border-radius: 50%; animation: spin 1s linear infinite; }
+        .test-button:disabled {
+            background: var(--accent-dark);
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .loader {
+            display: none;
+            width: 18px;
+            height: 18px;
+            border: 2px solid #D1D5DB;
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+            flex-shrink: 0;
+        }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .loading-message { margin-top: 15px; font-size: 1.1rem; color: #333; font-weight: 500; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
 
-
-        @media (max-width: 768px) {
-            h1 { font-size: 1.8rem; }
-            .container {
-                flex-direction: column;
-                height: auto;
-            }
-            .tab-navigation {
-                flex-direction: row;
-                width: 100%;
-                margin-right: 0;
-                margin-bottom: 15px;
-                overflow-x: auto;
-            }
-            .tab-button {
-                flex-shrink: 0;
-            }
-            .content-area {
-                height: 50vh;
-            }
-            .test-controls {
-                position: relative;
-                width: 100%;
-                bottom: auto;
-                right: auto;
-                margin-top: 20px;
-            }
-        }
+        .window-content::-webkit-scrollbar { width: 8px; }
+        .window-content::-webkit-scrollbar-track { background: #F3F4F6; }
+        .window-content::-webkit-scrollbar-thumb { background: #D1D5DB; border-radius: 4px; }
+        .window-content::-webkit-scrollbar-thumb:hover { background: #9CA3AF; }
     </style>
 </head>
 <body>
@@ -290,184 +299,134 @@
 
     <div class="container">
         <div class="tab-navigation">
-            <button class="tab-button active" onclick="switchTab(1)">
-                <span>Raw Segment Data</span>
-                <div class="status-indicator inactive" id="tab-status1"></div>
-            </button>
-            <button class="tab-button" onclick="switchTab(2)">
-                <span>Parsed Segment Data</span>
-                <div class="status-indicator inactive" id="tab-status2"></div>
-            </button>
-            <button class="tab-button" onclick="switchTab(3)">
-                <span>CRAM Designator Data</span>
-                <div class="status-indicator inactive" id="tab-status3"></div>
-            </button>
-            <button class="tab-button" onclick="switchTab(4)">
-                <span>Models Data</span>
-                <div class="status-indicator inactive" id="tab-status4"></div>
-            </button>
+            <button class="tab-button active" onclick="switchTab(1)"><span>Raw Segment Data</span></button>
+            <button class="tab-button" onclick="switchTab(2)"><span>Parsed Segment Data</span></button>
+            <button class="tab-button" onclick="switchTab(3)"><span>CRAM Designator Data</span></button>
+            <button class="tab-button" onclick="switchTab(4)"><span>Models Data</span></button>
+
+            <div class="test-controls">
+                <h4>Triggers</h4>
+                <div class="trigger-wrapper"><button class="test-button" onclick="sendTestData(this, 1)">Segmented Data</button><span class="loader" id="loader-1"></span></div>
+                <div class="trigger-wrapper"><button class="test-button" onclick="sendTestData(this, 2)">Parsed Data</button><span class="loader" id="loader-2"></span></div>
+                <div class="trigger-wrapper"><button class="test-button" onclick="sendTestData(this, 3)">CRAM Data</button><span class="loader" id="loader-3"></span></div>
+                <div class="trigger-wrapper"><button class="test-button" onclick="sendTestData(this, 4)">Models Data</button><span class="loader" id="loader-4"></span></div>
+            </div>
         </div>
 
         <div class="content-area">
-            <div class="window active" id="window1">
-                <div class="window-content" id="content1">
-                    <div class="no-data">No data received yet...</div>
-                </div>
-            </div>
-
-            <div class="window" id="window2">
-                <div class="window-content" id="content2">
-                    <div class="no-data">No data received yet...</div>
-                </div>
-            </div>
-
-            <div class="window" id="window3">
-                <div class="window-content" id="content3">
-                    <div class="no-data">No data received yet...</div>
-                </div>
-            </div>
-
-            <div class="window" id="window4">
-                <div class="window-content" id="content4">
-                    <div class="no-data">No data received yet...</div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="test-controls">
-        <h4 style="margin-bottom: 10px;">Triggers</h4>
-        <button class="test-button" onclick="sendTestData(1, 'Gathering raw segmented data...')">Segmented Data</button>
-        <button class="test-button" onclick="sendTestData(2, 'Parsing segment data...')">Parsed Data</button>
-        <button class="test-button" onclick="sendTestData(3, 'Invoking CRAM agent...')">CRAM Data</button>
-        <button class="test-button" onclick="sendTestData(4, 'Building models...')">Models Data</button>
-    </div>
-
-    <div id="loading-overlay" style="display: none;">
-        <div style="text-align: center;">
-            <div class="spinner"></div>
-            <div class="loading-message" id="loading-message">Processing...</div>
+            <div class="window active" id="window1"><div class="window-content" id="content1"><div class="no-data">No data received yet...</div></div></div>
+            <div class="window" id="window2"><div class="window-content" id="content2"><div class="no-data">No data received yet...</div></div></div>
+            <div class="window" id="window3"><div class="window-content" id="content3"><div class="no-data">No data received yet...</div></div></div>
+            <div class="window" id="window4"><div class="window-content" id="content4"><div class="no-data">No data received yet...</div></div></div>
         </div>
     </div>
 
     <script>
-        // --- NEW FUNCTION for Tab Switching ---
         function switchTab(windowNumber) {
-            // Deactivate all tabs and windows
             document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
             document.querySelectorAll('.window').forEach(win => win.classList.remove('active'));
-
-            // Activate the selected tab and window
-            document.querySelector(`.tab-button:nth-child(${windowNumber})`).classList.add('active');
+            document.querySelector(`.tab-navigation .tab-button:nth-child(${windowNumber})`).classList.add('active');
             document.getElementById(`window${windowNumber}`).classList.add('active');
         }
 
-        // --- UNUSED FUNCTIONALITY (kept as requested) ---
-        let maximizedWindow = null;
-        function toggleMaximize(windowNumber) {
-            // This function is no longer used in the tabbed UI
-            // but is kept to meet the requirement of not changing existing functions.
-            console.warn("toggleMaximize is not applicable in the new tabbed layout.");
-        }
-
-        // Initialize Socket.IO connection
-        const socket = io();
-
-        // Track if each window has received data
-        const windowStatus = {
-            window1: false,
-            window2: false,
-            window3: false,
-            window4: false
-        };
-
-        // MODIFIED: Function to update window content
         function updateWindow(windowId, data, timestamp) {
-            const windowNum = windowId.slice(-1);
-            const contentDiv = document.getElementById(`content${windowNum}`);
-            const tabStatusIndicator = document.getElementById(`tab-status${windowNum}`);
-
-            // Clear "no data" message if it exists
+            const contentDiv = document.getElementById(`content${windowId.slice(-1)}`);
             const noDataMsg = contentDiv.querySelector('.no-data');
-            if (noDataMsg) {
-                noDataMsg.remove();
-            }
+            if (noDataMsg) noDataMsg.remove();
 
-            // Create new data entry
             const dataEntry = document.createElement('div');
             dataEntry.className = 'data-entry new';
-            // MODIFICATION: The timestamp div has been removed from this innerHTML.
+
             dataEntry.innerHTML = `
+                <div class="entry-controls">
+                    <button class="toggle-all-btn" onclick="toggleAll(this)">Expand All</button>
+                </div>
                 <div class="data-content">
                     <div class="json-viewer">
-                        ${createJsonViewer(data)}
+                        ${createJsonViewer(data, 0, true)}
                     </div>
-                </div>
-            `;
+                </div>`;
 
-            // Add to bottom of content
             contentDiv.appendChild(dataEntry);
-
-            // Update status indicator on the tab
-            windowStatus[windowId] = true;
-            tabStatusIndicator.classList.remove('inactive');
-
-            // Auto-scroll to the bottom
-            contentDiv.scrollTop = contentDiv.scrollHeight;
-
-            // Remove "new" class after animation
-            setTimeout(() => {
-                dataEntry.classList.remove('new');
-            }, 500);
+            setTimeout(() => dataEntry.classList.remove('new'), 500);
         }
 
-        // JSON Viewer functionality
-        function createJsonViewer(data, level = 0) {
-            if (data === null) { return `<span class="json-null">null</span>`; }
-            if (typeof data === 'string') { return `<span class="json-string">"${escapeHtml(data)}"</span>`; }
-            if (typeof data === 'number') { return `<span class="json-number">${data}</span>`; }
-            if (typeof data === 'boolean') { return `<span class="json-boolean">${data}</span>`; }
+        function formatCramPlan(planString) {
+            let result = '';
+            let level = 0;
+            const indent = '    ';
+
+            const tokens = planString.replace(/\(/g, ' ( ').replace(/\)/g, ' ) ').trim().split(/\s+/);
+
+            let onNewLine = true;
+            for (const token of tokens) {
+                if (token === ')') {
+                    level--;
+                }
+
+                if (token === '(') {
+                    if (!onNewLine) {
+                        result += '\n' + indent.repeat(level);
+                    }
+                    result += token;
+                    level++;
+                    onNewLine = true;
+                } else if (token === ')') {
+                    result += token;
+                    onNewLine = false;
+                } else {
+                    if (onNewLine) {
+                        result += ' ';
+                    } else {
+                        result += ' ';
+                    }
+                    result += token;
+                    onNewLine = false;
+                }
+            }
+            return result;
+        }
+
+        function createJsonViewer(data, level = 0, isExpanded = false, parentKey = null) {
+            if (parentKey === 'cram_plan' && typeof data === 'string') {
+                const formattedPlan = formatCramPlan(data);
+                return `<pre class="cram-plan-view">${escapeHtml(formattedPlan)}</pre>`;
+            }
+
+            if (data === null) return `<span class="json-null">null</span>`;
+            if (typeof data === 'string') return `<span class="json-string">"${escapeHtml(data)}"</span>`;
+            if (typeof data === 'number') return `<span class="json-number">${data}</span>`;
+            if (typeof data === 'boolean') return `<span class="json-boolean">${data}</span>`;
+
+            const id = 'json_' + Math.random().toString(36).substr(2, 9);
+
             if (Array.isArray(data)) {
-                if (data.length === 0) { return '<span class="json-bracket">[]</span>'; }
-                const id = 'json_' + Math.random().toString(36).substr(2, 9);
-                const indent = '&nbsp;&nbsp;&nbsp;&nbsp;'.repeat(level);
-                const childIndent = '&nbsp;&nbsp;&nbsp;&nbsp;'.repeat(level + 1);
+                if (data.length === 0) return '<span class="json-bracket">[]</span>';
                 let html = `<div class="json-container">`;
-                html += `<div class="json-collapsed-preview" id="${id}_collapsed">`;
-                html += `${indent}<span class="expand-icon" onclick="toggleJsonExpand('${id}')" title="Click to expand">▶</span>`;
-                html += `<span class="json-bracket">[</span><span class="json-ellipsis"> ${data.length} items </span><span class="json-bracket">]</span>`;
-                html += `</div>`;
-                html += `<div class="json-expanded-content" id="${id}_expanded">`;
-                html += `<div class="json-line">${indent}<span class="expand-icon expanded" onclick="toggleJsonExpand('${id}')" title="Click to collapse">▼</span><span class="json-bracket">[</span></div>`;
+                html += `<div class="json-collapsed-preview" id="${id}_collapsed" ${isExpanded ? 'style="display: none;"' : ''}><span class="expand-icon" data-id="${id}" onclick="toggleJsonExpand('${id}')">▶</span><span class="json-bracket">[</span><span class="json-ellipsis"> ${data.length} items </span><span class="json-bracket">]</span></div>`;
+                html += `<div class="json-expanded-content${isExpanded ? ' expanded' : ''}" id="${id}_expanded"><div class="json-line"><span class="expand-icon${isExpanded ? ' expanded' : ''}" data-id="${id}" onclick="toggleJsonExpand('${id}')">▼</span><span class="json-bracket">[</span></div><div class="json-children${isExpanded ? ' expanded' : ''}">`;
                 data.forEach((item, index) => {
-                    html += `<div class="json-line">${childIndent}${createJsonViewer(item, level + 1)}`;
-                    if (index < data.length - 1) { html += '<span class="json-bracket">,</span>'; }
+                    html += `<div class="json-line">${createJsonViewer(item, level + 1, false, null)}`;
+                    if (index < data.length - 1) html += '<span class="json-bracket">,</span>';
                     html += `</div>`;
                 });
-                html += `<div class="json-line">${indent}<span class="json-bracket">]</span></div>`;
-                html += `</div></div>`;
+                html += `</div><div class="json-line"><span class="json-bracket">]</span></div></div></div>`;
                 return html;
             }
+
             if (typeof data === 'object') {
                 const keys = Object.keys(data);
-                if (keys.length === 0) { return '<span class="json-bracket">{}</span>'; }
-                const id = 'json_' + Math.random().toString(36).substr(2, 9);
-                const indent = '&nbsp;&nbsp;&nbsp;&nbsp;'.repeat(level);
-                const childIndent = '&nbsp;&nbsp;&nbsp;&nbsp;'.repeat(level + 1);
+                if (keys.length === 0) return '<span class="json-bracket">{}</span>';
                 let html = `<div class="json-container">`;
-                html += `<div class="json-collapsed-preview" id="${id}_collapsed">`;
-                html += `${indent}<span class="expand-icon" onclick="toggleJsonExpand('${id}')" title="Click to expand">▶</span>`;
-                html += `<span class="json-bracket">{</span><span class="json-ellipsis"> ${keys.length} keys </span><span class="json-bracket">}</span>`;
-                html += `</div>`;
-                html += `<div class="json-expanded-content" id="${id}_expanded">`;
-                html += `<div class="json-line">${indent}<span class="expand-icon expanded" onclick="toggleJsonExpand('${id}')" title="Click to collapse">▼</span><span class="json-bracket">{</span></div>`;
+                html += `<div class="json-collapsed-preview" id="${id}_collapsed" ${isExpanded ? 'style="display: none;"' : ''}><span class="expand-icon" data-id="${id}" onclick="toggleJsonExpand('${id}')">▶</span><span class="json-bracket">{</span><span class="json-ellipsis"> ${keys.length} keys </span><span class="json-bracket">}</span></div>`;
+                html += `<div class="json-expanded-content${isExpanded ? ' expanded' : ''}" id="${id}_expanded"><div class="json-line"><span class="expand-icon${isExpanded ? ' expanded' : ''}" data-id="${id}" onclick="toggleJsonExpand('${id}')">▼</span><span class="json-bracket">{</span></div><div class="json-children${isExpanded ? ' expanded' : ''}">`;
                 keys.forEach((key, index) => {
-                    html += `<div class="json-line">${childIndent}<span class="json-key">"${escapeHtml(key)}"</span>: ${createJsonViewer(data[key], level + 1)}`;
-                    if (index < keys.length - 1) { html += '<span class="json-bracket">,</span>'; }
+                    const shouldChildBeExpanded = (level === 0 && index === 0);
+                    html += `<div class="json-line"><span class="json-key">"${escapeHtml(key)}"</span>:&nbsp;${createJsonViewer(data[key], level + 1, shouldChildBeExpanded, key)}`;
+                    if (index < keys.length - 1) html += '<span class="json-bracket">,</span>';
                     html += `</div>`;
                 });
-                html += `<div class="json-line">${indent}<span class="json-bracket">}</span></div>`;
-                html += `</div></div>`;
+                html += `</div><div class="json-line"><span class="json-bracket">}</span></div></div></div>`;
                 return html;
             }
             return String(data);
@@ -476,14 +435,45 @@
         function toggleJsonExpand(id) {
             const collapsedElement = document.getElementById(`${id}_collapsed`);
             const expandedElement = document.getElementById(`${id}_expanded`);
-            if (expandedElement.classList.contains('expanded')) {
+            const isCurrentlyExpanded = expandedElement.classList.contains('expanded');
+            const iconInExpanded = expandedElement.querySelector(`.expand-icon[data-id="${id}"]`);
+
+            if (isCurrentlyExpanded) {
                 expandedElement.classList.remove('expanded');
+                if(iconInExpanded) iconInExpanded.classList.remove('expanded');
+                expandedElement.querySelector('.json-children').classList.remove('expanded');
                 collapsedElement.style.display = 'block';
                 expandedElement.style.display = 'none';
             } else {
                 expandedElement.classList.add('expanded');
+                if(iconInExpanded) iconInExpanded.classList.add('expanded');
+                expandedElement.querySelector('.json-children').classList.add('expanded');
                 collapsedElement.style.display = 'none';
                 expandedElement.style.display = 'block';
+            }
+        }
+
+        function toggleAll(button) {
+            const dataEntry = button.closest('.data-entry');
+            const icons = dataEntry.querySelectorAll('.expand-icon');
+            if (icons.length === 0) return;
+
+            const shouldExpand = button.dataset.state !== 'expanded';
+
+            icons.forEach(icon => {
+                const isCurrentlyExpanded = icon.classList.contains('expanded');
+                if ((shouldExpand && !isCurrentlyExpanded) || (!shouldExpand && isCurrentlyExpanded)) {
+                    const id = icon.getAttribute('data-id');
+                    if (id) toggleJsonExpand(id);
+                }
+            });
+
+            if (shouldExpand) {
+                button.dataset.state = 'expanded';
+                button.textContent = 'Collapse All';
+            } else {
+                button.dataset.state = 'collapsed';
+                button.textContent = 'Expand All';
             }
         }
 
@@ -493,52 +483,38 @@
             return div.innerHTML;
         }
 
-        // Socket.IO listeners
-        socket.on('window1_update', (data) => { updateWindow('window1', data.data, data.timestamp); });
-        socket.on('window2_update', (data) => { updateWindow('window2', data.data, data.timestamp); });
-        socket.on('window3_update', (data) => { updateWindow('window3', data.data, data.timestamp); });
-        socket.on('window4_update', (data) => { updateWindow('window4', data.data, data.timestamp); });
+        function sendTestData(buttonElement, windowNum) {
+            const loader = document.getElementById(`loader-${windowNum}`);
+            if(loader) loader.style.display = 'inline-block';
+            buttonElement.disabled = true;
 
-        // Connection status
-        socket.on('connect', () => { console.log('Connected to server'); });
-        socket.on('disconnect', () => {
-            console.log('Disconnected from server');
-            for (let i = 1; i <= 4; i++) {
-                document.getElementById(`tab-status${i}`).classList.add('inactive');
-            }
-        });
-
-        // Test button functionality
-        function sendTestData(windowNum, message = "Processing...") {
-            const overlay = document.getElementById('loading-overlay');
-            const messageBox = document.getElementById('loading-message');
-            messageBox.textContent = message;
-            overlay.style.display = 'flex';
             fetch(`/api/test/window${windowNum}`)
                 .then(response => response.json())
-                .then(result => { console.log(`Test data sent for window ${windowNum}:`, result); })
-                .catch(error => { console.error(`Error sending test data to window ${windowNum}:`, error); })
-                .finally(() => { overlay.style.display = 'none'; });
+                .then(result => console.log(`Test data sent for window ${windowNum}:`, result))
+                .catch(error => console.error(`Error sending test data to window ${windowNum}:`, error))
+                .finally(() => {
+                    if(loader) loader.style.display = 'none';
+                    buttonElement.disabled = false;
+                });
         }
-        
-        // Load existing data on page load
-        window.addEventListener('load', () => {
-            // Set the first tab as active on load
-            switchTab(1);
 
+        const socket = io();
+        socket.on('window1_update', (data) => updateWindow('window1', data.data, data.timestamp));
+        socket.on('window2_update', (data) => updateWindow('window2', data.data, data.timestamp));
+        socket.on('window3_update', (data) => updateWindow('window3', data.data, data.timestamp));
+        socket.on('window4_update', (data) => updateWindow('window4', data.data, data.timestamp));
+        socket.on('connect', () => console.log('Connected to server'));
+        socket.on('disconnect', () => console.log('Disconnected from server'));
+
+        window.addEventListener('load', () => {
+            switchTab(1);
             for (let i = 1; i <= 4; i++) {
                 fetch(`/api/data/window${i}`)
                     .then(response => response.json())
                     .then(data => {
-                        if (data.length > 0) {
-                            data.slice(-10).forEach(entry => {
-                                updateWindow(`window${i}`, entry.data, entry.timestamp);
-                            });
-                        }
+                        if (data.length > 0) data.slice(-10).forEach(entry => updateWindow(`window${i}`, entry.data, entry.timestamp));
                     })
-                    .catch(error => {
-                        console.error(`Error loading data for window ${i}:`, error);
-                    });
+                    .catch(error => console.error(`Error loading data for window ${i}:`, error));
             }
         });
     </script>

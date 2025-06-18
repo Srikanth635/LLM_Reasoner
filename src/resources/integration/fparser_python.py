@@ -54,44 +54,7 @@ def parse_segment_data(text_data):
 
     return parsed_list
 
-
-def parse_summary_data(text_data):
-    """
-    Parses summary text to extract segment descriptions and single-word actions
-    into two separate dictionaries.
-
-    Args:
-        text_data (str): The raw string containing the summary lines.
-
-    Returns:
-        list: A list containing two dictionaries:
-              1. A dictionary of segment descriptions.
-              2. A dictionary of segment actions.
-    """
-    # Dictionary to hold descriptions like:
-    # {'Segment 1': 'the person picks up a brown onion...'}
-    descriptions_dict = {}
-    # Regex to find lines starting with "In Segment..." and capture the segment
-    # number and the rest of the sentence.
-    description_pattern = re.compile(r"In (Segment \d+), (.*?)\s*\n")
-    description_matches = description_pattern.findall(text_data)
-    for segment, text in description_matches:
-        descriptions_dict[segment] = text.strip()
-
-    # Dictionary to hold actions like:
-    # {'Segment 1': 'Picking'}
-    actions_dict = {}
-    # Regex to find lines formatted like "Segment 1: Picking" and capture
-    # the segment number and the action word.
-    action_pattern = re.compile(r"^(Segment \d+): (.*?)\s*$", re.MULTILINE)
-    action_matches = action_pattern.findall(text_data)
-    for segment, action in action_matches:
-        actions_dict[segment] = action.strip()
-
-    return [descriptions_dict, actions_dict]
-
-
-def filter_redundant_actions(segment_list):
+def filter_redundant_actions_cut(segment_list):
     """
     Filters a list of segment dictionaries to remove items with duplicate
     'action_designator' values. It keeps the first occurrence of each unique
@@ -135,6 +98,117 @@ def filter_redundant_actions(segment_list):
             unique_list.append(segment)
 
     return unique_list
+
+def parse_segment_data_pour(text_data):
+    """
+    Parses a string containing segment data with original text and JSON
+    into a list of dictionaries.
+
+    Args:
+        text_data (str): The raw string containing the segment information.
+
+    Returns:
+        list: A list of dictionaries, where each dictionary contains an
+              'instruction' and an 'action_designator' key.
+              Returns an empty list if no valid segments are found.
+    """
+    pattern = re.compile(
+        r"=== Segment \d+ ===\s*Original:\s*(.*?)\s*Generated JSON:\s*(\{.*?\n\})",
+        re.DOTALL
+    )
+
+    matches = pattern.findall(text_data)
+
+    parsed_list = []
+    for instruction_text, json_string in matches:
+        try:
+            instruction = instruction_text.strip()
+
+            # Parse the JSON string into a Python dictionary.
+            # The top-level key in the provided JSON is "action_designator".
+            full_json_data = json.loads(json_string)
+
+            # Extract the actual action_designator content
+            # Assuming 'action_designator' is always the top-level key
+            action_designator = full_json_data.get('action_designator')
+
+            if action_designator is None:
+                print(f"Skipping segment due to missing 'action_designator' key in JSON for instruction: {instruction}")
+                continue
+
+            segment_dict = {
+                'instruction': instruction,
+                'action_designator': action_designator
+            }
+            parsed_list.append(segment_dict)
+
+        except json.JSONDecodeError as e:
+            print(f"Skipping a segment due to a JSON parsing error: {e}")
+            continue
+
+    return parsed_list
+
+def parse_summary_data(text_data):
+    """
+    Parses summary text to extract segment descriptions and single-word actions
+    into two separate dictionaries.
+
+    Args:
+        text_data (str): The raw string containing the summary lines.
+
+    Returns:
+        list: A list containing two dictionaries:
+              1. A dictionary of segment descriptions.
+              2. A dictionary of segment actions.
+    """
+    # Dictionary to hold descriptions like:
+    # {'Segment 1': 'the person picks up a brown onion...'}
+    descriptions_dict = {}
+    # Regex to find lines starting with "In Segment..." and capture the segment
+    # number and the rest of the sentence.
+    description_pattern = re.compile(r"In (Segment \d+), (.*?)\s*\n")
+    description_matches = description_pattern.findall(text_data)
+    for segment, text in description_matches:
+        descriptions_dict[segment] = text.strip()
+
+    # Dictionary to hold actions like:
+    # {'Segment 1': 'Picking'}
+    actions_dict = {}
+    # Regex to find lines formatted like "Segment 1: Picking" and capture
+    # the segment number and the action word.
+    action_pattern = re.compile(r"^(Segment \d+): (.*?)\s*$", re.MULTILINE)
+    action_matches = action_pattern.findall(text_data)
+    for segment, action in action_matches:
+        actions_dict[segment] = action.strip()
+
+    return [descriptions_dict, actions_dict]
+
+def filter_redundant_actions(segment_list):
+    """
+    Filters a list of segment dictionaries to remove items with duplicate
+    'action_designator' values. It keeps the first occurrence of each unique
+    action designator.
+
+    Args:
+        segment_list (list): A list of dictionaries, where each dict has
+                             at least an 'action_designator' key.
+
+    Returns:
+        list: A new list containing only the segments with unique
+              action designators.
+    """
+    seen_actions = set()
+    unique_list = []
+    for segment in segment_list:
+        action_designator = segment.get('action_designator')
+        if action_designator is None:
+            continue
+        action_string = json.dumps(action_designator, sort_keys=True)
+        if action_string not in seen_actions:
+            seen_actions.add(action_string)
+            unique_list.append(segment)
+    return unique_list
+
 
 
 def filter_redundant_executed_actions(segment_list):
@@ -222,6 +296,7 @@ def decompose_segments_with_atomic_actions(chain, segment_list):
             decomposed_list.append(new_segment)
 
     return decomposed_list
+
 
 
 if __name__ == "__main__":

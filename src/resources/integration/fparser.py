@@ -62,7 +62,7 @@ system_prompt_template = """
 
 system_prompt = ChatPromptTemplate.from_template(system_prompt_template)
 
-decomposer_prompt_template = """
+decomposer_prompt_template_cut = """
     You are a highly focused LLM agent in a LangChain workflow. Your purpose is to process human-written action descriptions
     and transform them into concise, robot-friendly instructions.
 
@@ -123,8 +123,124 @@ decomposer_prompt_template = """
     /nothink
 """
 
+decomposer_prompt_cut = ChatPromptTemplate.from_template(decomposer_prompt_template_cut)
+
+decomposer_prompt_template = """
+    You are a task planning agent that generates clear and concise robotic instructions based on video segment descriptions.
+
+    Given a list of video segments showing a person performing a task, you will:
+    - Interpret the overall goal.
+    - Generate a **numbered list of robotic actions** using only the provided **allowed action classes**.
+    - Use **imperative form** for each instruction (e.g., "Pick up...", "Pour...", "Place...").
+    - Ensure each line starts with an allowed action verb followed by a description.
+    - Output **only the numbered list**, no explanations, no markdown, no extra text.
+    
+    ---
+    
+    ### ✅ Allowed Action Classes:
+    
+    [Peeling, Adding, Arranging, Baking, Shutting, Cooking, Cooling, Cutting, Evaluating, Filling, Flavouring, Flipping,
+    PickingUp, Lifting, Mixing, Neutralizing, Opening, OpeningADoor, OperatingATap, Pipetting, Pouring, Preheating, Pressing,
+    Pulling, Placing, Removing, Rolling, Serving, Shaking, Spooning, Spreading, Sprinkling, Starting, Stopping, Stirring,
+    Storing, Taking, Turning, TurningOnElectricalDevice, Unscrewing, UsingMeasuringCup, UsingSpiceJar, Waiting, Holding]
+    
+    
+    ---
+    
+    Now I will provide you with the video segment descriptions. Based on them, output the robotic instructions as a numbered list.
+    
+    [Video Segment Descriptions]
+    Segment 1: ...
+    Segment 2: ...
+    ...
+    Segment N: ...
+    
+    
+    ✅ Example Output Format:
+    - Pick up the box of Cheez-It crackers
+    - Pick up the red bowl
+    - Place the red bowl on the table in a stable position
+    - Pick up the red cup and mustard bottle
+    - Place the red cup and mustard bottle near the red bowl
+    - Open the box of Cheez-It crackers
+    - Pour the Cheez-It crackers from the box into the red bowl
+    - Evaluate the pouring process to ensure even distribution
+    - Place the empty box back on the table
+
+    🚫 Do NOT:
+    - Add steps like "Move to...", "Pick up...", "Place..." unless they are explicitly present in the input.
+
+    - Infer tool use, intent, or sequence not clearly described.
+
+    - Include commentary or formatting beyond the numbered steps.
+
+    ---
+
+    Now, perform the task on the given segments data:
+
+    segments : {segments}
+
+    /nothink
+"""
+
 decomposer_prompt = ChatPromptTemplate.from_template(decomposer_prompt_template)
 
+
+# decomposer_reflection_prompt_template = """
+#     You are a Reflectance Agent. Your role is to refine a list of step-by-step, atomic, imperative instructions produced by another agent. These
+#     instructions describe how to complete a task using only allowed action classes.
+#
+#     Your goal is to return a concise, non-redundant, and logically complete set of instructions that preserves task accuracy while removing unnecessary or placeholder content.
+#
+#     🧠 Your Responsibilities
+#     - Filter Redundant Instructions
+#         - Remove instructions that are unnecessarily repeated or semantically equivalent to earlier steps.
+#
+#     - Remove Placeholder or Non-Actionable Instructions
+#         - Eliminate vague instructions like “continue pouring” or “make sure it is steady” if they do not add distinct functional value.
+#         - Retain only actions that directly change the task state (e.g., grasp, lift, pour, place).
+#
+#     - Ensure Atomicity
+#         - Confirm that each instruction remains atomic: one action on one object.
+#
+#     - Preserve Logical Task Flow
+#         - Maintain the correct chronological and functional sequence needed to complete the inferred task.
+#
+#     - Preserve Specificity and Action Class Alignment
+#         - Ensure each instruction is specific, refers to the correct object(s), and implicitly aligns with a valid action class from the original list.
+#
+#     🧾 Input Format
+#     Inferred Task Goal: [One sentence]
+#
+#     Instructions:
+#     1. [Instruction 1]
+#     2. [Instruction 2]
+#     ...
+#
+#     📤 Output Format
+#     Return a cleaned version in the same format, with no extra commentary.
+#
+#     Inferred Task Goal: [Refined version of task goal, if needed]
+#
+#     Refined Instructions:
+#     1. [Cleaned Instruction 1]
+#     2. [Cleaned Instruction 2]
+#
+#     ...
+#
+#     ⚠️ DO NOT:
+#     - Add any new instructions not in the original list
+#     - Change the meaning of any instruction
+#     - Generalize or paraphrase — retain exact object references and imperative tone
+#
+#     ---
+#
+#     Now, perform the task on the given instruction context:
+#
+#     instruction_context : {instruction_context}
+# """
+#
+# decomposer_reflection_prompt = ChatPromptTemplate.from_template(decomposer_reflection_prompt_template)
 
 def think_remover(res: str):
     if re.search(r"<think>.*?</think>", res, flags=re.DOTALL):
@@ -136,7 +252,7 @@ def think_remover(res: str):
 
 
 try:
-    ollama_llm = ChatOllama(model="qwen3:14b")
+    ollama_llm = ChatOllama(model="qwen3:8b")
 except:
     print("14b model not available, using 8b model")
     ollama_llm = ChatOllama(model="qwen3:8b")

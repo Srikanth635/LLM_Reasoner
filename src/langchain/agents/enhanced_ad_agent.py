@@ -746,6 +746,7 @@ def cram_node(state : StateModel):
     action_core = state['action_core']
     required_fields = json_data[action_core]['action_roles']
     cram_plan = json_data[action_core]['cram_plan']
+    # cram_plan = '\n'.join(cram_plan)
     print("cram_plan", cram_plan)
     print("-" * 10)
 
