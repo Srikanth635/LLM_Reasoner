@@ -28,7 +28,6 @@ action_classes = [Peeling,Adding,
     Mixing,
     Neutralizing,
     Opening,
-    OpeningADoor,
     OperatingATap,
     Pipetting,
     Pouring,
@@ -149,7 +148,7 @@ mod1_template = """
     ### Allowed Action Types (Action Cores):
     Choose only one of the following canonical action types:
     
-    ["Cutting","Lifting", "OpeningADoor", "OperatingATap", "Pipetting", "PickingUp",
+    ["Cutting","Lifting", "Opening", "OperatingATap", "Pipetting", "PickingUp",
     "Pouring", "Pressing", "Pulling", "Placing", "Removing", "Rolling", "Shaking", "Spooning",
     "Spreading", "Sprinkling", "Stirring", "Taking", "Turning", "TurningOnElectricalDevice",
     "Unscrewing"]

@@ -108,11 +108,11 @@ class Opening(BaseModel):
     obj_to_be_opened: str
     action_verb: str
 
-class OpeningADoor(BaseModel):
-    """A Pydantic model for the 'OpeningADoor' action."""
-    obj_to_be_opened: str
-    action_verb: str
-    cram_plan: Optional[str] = None
+# class OpeningADoor(BaseModel):
+#     """A Pydantic model for the 'OpeningADoor' action."""
+#     obj_to_be_opened: str
+#     action_verb: str
+#     cram_plan: Optional[str] = None
 
 class OperatingATap(BaseModel):
     """A Pydantic model for the 'OperatingATap' action."""
@@ -134,9 +134,10 @@ class Pipetting(BaseModel):
 
 class Pouring(BaseModel):
     """A Pydantic model for the 'Pouring' action."""
-    stuff: str
-    goal: str
-    action_verb: str
+    stuff: str = Field(description="entity being poured")
+    source : str = Field(description="container from which the substance is poured")
+    goal: str = Field(description="container/location to which the substance is poured")
+    action_verb: str = Field(description="verb representing the action, e.g., 'pour'")
     unit: Optional[str] = Field(description="Units (liters, drops, ounces etc.,)", default=None)
     amount: Optional[float] = Field(description="Amount of quantity to pour ", default=None)
     cram_plan: Optional[str] = None

@@ -7,13 +7,17 @@ from src.resources.integration.fparser import *
 from src.flasking.sending_windows import *
 from src.langchain.agents.enhanced_ad_agent import *
 from src.langchain.models_graph import *
+from src.langchain.llm_configuration import *
 from pathlib import Path
 
 graph_output = []
-final_parse = ""
+summary = ""
+segments = ""
 context = ""
+final_parse = ""
 
-with open("./feroz_context.txt", 'r') as f:
+# with open("./feroz_context.txt", 'r') as f:
+with open("./CRAM_Plan_Executive.txt", 'r') as f:
     context = f.read()
 
 
@@ -138,19 +142,27 @@ def handle_disconnect():
     print('Client disconnected')
 
 def generate_test_data_for_window1():
+    print("Windows 1 Invoked")
     global context
+    global summary
     summary = parse_summary_data(context)
+    global segments
     segments = parse_segment_data(context)
-    filtered_segments = filter_redundant_actions(segments)
-    final_unique_segments = filter_redundant_executed_actions(filtered_segments)
-    chain = decomposer_prompt | ollama_llm.with_structured_output(AtomicsModel, method="json_schema")
-    global final_parse
-    final_parse = decompose_segments_with_atomic_actions(chain, final_unique_segments)
+    # filtered_segments = filter_redundant_actions(segments)
+    # final_unique_segments = filter_redundant_executed_actions(filtered_segments)
     for seg in segments:
         print("📡 Sending test data to 1st window...")
         send_data_to_window(1, seg)
 
 def generate_test_data_for_window2():
+    print("Windows 2 Invoked")
+    chain = decomposer_prompt | ollama_llm.with_structured_output(AtomicsModel, method="json_schema")
+    global summary
+    global final_parse
+    print("Invoking Model")
+    final_parse = chain.invoke({'segments': summary[0]})
+    final_parse = final_parse.atomics
+    # final_parse = decompose_segments_with_atomic_actions(chain, final_unique_segments)
     for par in final_parse:
         print("📡 Sending test data to 2nd window...")
         send_data_to_window(2, par)
@@ -158,9 +170,10 @@ def generate_test_data_for_window2():
 def generate_test_data_for_window3():
     # final_parse_filtered = [final_parse[0], final_parse[1], final_parse[2]]
     for fp in final_parse:
-        instruction = fp['instruction']
-        ad = fp['action_designator']
-        out = ad_graph.invoke({'instruction': instruction, 'context': ad})
+        # instruction = fp['instruction']
+        # ad = fp['action_designator']
+        print("Invoking Model")
+        out = ad_graph.invoke({'instruction': fp, 'context': ""})
         global graph_output
         graph_output.append(out)
 
@@ -188,7 +201,7 @@ def generate_test_data_for_window4():
     config = {"configurable" : {"thread_id" : 1}}
     framenet_model = ""
     flanagan = ""
-    for out in graph_output:
+    for out in graph_output[:3]:
         print("<UNK> Sending test data to 4th window...")
         instruction = out['instruction']
         action_core = out['action_core']

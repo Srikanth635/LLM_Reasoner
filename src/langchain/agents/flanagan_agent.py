@@ -779,7 +779,7 @@ def flanagan_premotion_node(state : StateModel):
     action_core = state['action_core']
     enriched_json_attributes = state['enriched_action_core_attributes']
 
-    chain = flanagan_premotion_prompt | ollama_llm.with_structured_output(FullPhase, method="json_schema")
+    chain = flanagan_premotion_prompt | ollama_llm_small.with_structured_output(FullPhase, method="json_schema")
     response = chain.invoke({"instruction": instruction, "action_core" : action_core, "enriched_attributes" : enriched_json_attributes})
     print(response)
     return {'premotion_phase' : response.model_dump_json(indent=2, by_alias=True)}
@@ -795,7 +795,7 @@ def flanagan_phaser_node(state:StateModel):
     action_core = state['action_core']
     instruction = state['instruction']
 
-    chain2 = flanagan_phaser_prompt | ollama_llm.with_structured_output(TaskModel, method="json_schema")
+    chain2 = flanagan_phaser_prompt | ollama_llm_small.with_structured_output(TaskModel, method="json_schema")
     response2 = chain2.invoke({"premotion_phase": premotion_phase, "cram_plan" : cram_plan, "action_core" : action_core, "instruction" : instruction})
     print(response2)
     return {'phaser' : response2.model_dump_json(indent=2)}
@@ -809,7 +809,7 @@ def flanagan_repr(state : StateModel):
     premotion_phase = state['premotion_phase']
     phaser = state['phaser']
 
-    chain3 = flanagan_combiner_prompt | ollama_llm.with_structured_output(FinalModel, method="json_schema")
+    chain3 = flanagan_combiner_prompt | ollama_llm_small.with_structured_output(FinalModel, method="json_schema")
     response3 = chain3.invoke({"premotion_phase": premotion_phase, "phaser" : phaser})
     print(response3)
     return {'flanagan' : response3.model_dump_json(indent=2)}

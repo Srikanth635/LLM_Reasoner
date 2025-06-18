@@ -126,28 +126,46 @@ decomposer_prompt_template_cut = """
 decomposer_prompt_cut = ChatPromptTemplate.from_template(decomposer_prompt_template_cut)
 
 decomposer_prompt_template = """
-    You are a task planning agent that generates clear and concise robotic instructions based on video segment descriptions.
+    You are a task planning agent that generates clear, step-by-step robotic instructions based on video segment descriptions .
 
-    Given a list of video segments showing a person performing a task, you will:
-    - Interpret the overall goal.
-    - Generate a **numbered list of robotic actions** using only the provided **allowed action classes**.
-    - Use **imperative form** for each instruction (e.g., "Pick up...", "Pour...", "Place...").
-    - Ensure each line starts with an allowed action verb followed by a description.
-    - Output **only the numbered list**, no explanations, no markdown, no extra text.
+    Your goal is to:
+    
+    - Understand the overall objective from the video segments.
+    - Generate a numbered list of robotic actions using only the allowed action classes listed below.
+    - Use imperative form for each instruction (e.g., "Pick up...", "Pour...", "Place...").
+    - Output only the numbered list — no explanations, no markdown, no extra text.
+    - Always follow the same flow of operations using the same entities followed in the original segment data.
+    
+    ⚠️ Important Guidelines:
+    
+    - Single-Handed Robot Assumption (Default):
+        - The robot has only one hand unless otherwise specified.
+        - This means: the robot must place an object before picking up another .
+        - Plan actions accordingly to avoid impossible sequences.
+        
+    -Action Sequence Matters:
+        - The order of actions must reflect the chronological flow shown in the video segments.
+        - If pouring into a bowl is described, ensure that picking up and placing the bowl happen before the pouring action.
+        - Always maintain awareness of what the robot is holding or doing at each step.
+        
+    - Common Sense & Realism:
+        - Ensure logical sequencing based on physical constraints (e.g., can't pour without first having the container)..
+        - Avoid over-interpreting or adding steps not directly suggested.
+        - Ensure realistic and physically possible sequences.
+    
+    - Avoid Redundancy:
+        - If two or more segments describe the same ongoing action (e.g., continuous pouring), output only one representative action — typically the first one .
+        - Do not repeat actions unless there’s a clear change in object, location, or action type.
+        
+    ✅ Allowed Action Classes:
+    [Peeling, Cutting,
+    PickingUp, Lifting, Opening, OperatingATap, Pipetting, Pouring, Pressing,
+    Pulling, Placing, Removing, Rolling, Shaking, Spooning, Sprinkling, Stirring,
+    Taking, Turning, Unscrewing, Waiting]
     
     ---
     
-    ### ✅ Allowed Action Classes:
-    
-    [Peeling, Adding, Arranging, Baking, Shutting, Cooking, Cooling, Cutting, Evaluating, Filling, Flavouring, Flipping,
-    PickingUp, Lifting, Mixing, Neutralizing, Opening, OpeningADoor, OperatingATap, Pipetting, Pouring, Preheating, Pressing,
-    Pulling, Placing, Removing, Rolling, Serving, Shaking, Spooning, Spreading, Sprinkling, Starting, Stopping, Stirring,
-    Storing, Taking, Turning, TurningOnElectricalDevice, Unscrewing, UsingMeasuringCup, UsingSpiceJar, Waiting, Holding]
-    
-    
-    ---
-    
-    Now I will provide you with the video segment descriptions. Based on them, output the robotic instructions as a numbered list.
+    You will receive multiple video segment descriptions in this format:
     
     [Video Segment Descriptions]
     Segment 1: ...
@@ -155,17 +173,16 @@ decomposer_prompt_template = """
     ...
     Segment N: ...
     
+     Based on them, output the robotic instructions as a numbered list.
     
     ✅ Example Output Format:
-    - Pick up the box of Cheez-It crackers
-    - Pick up the red bowl
-    - Place the red bowl on the table in a stable position
-    - Pick up the red cup and mustard bottle
-    - Place the red cup and mustard bottle near the red bowl
-    - Open the box of Cheez-It crackers
-    - Pour the Cheez-It crackers from the box into the red bowl
+    - Pick up the red cup
+    - Place the cup on the table
+    - Pick up the milk bottle
+    - Place the milk bottle near the cup
+    - Pour the milk from the milk bottle into the cup
     - Evaluate the pouring process to ensure even distribution
-    - Place the empty box back on the table
+    - Place the empty milk bottle back on the table
 
     🚫 Do NOT:
     - Add steps like "Move to...", "Pick up...", "Place..." unless they are explicitly present in the input.
@@ -179,7 +196,7 @@ decomposer_prompt_template = """
     Now, perform the task on the given segments data:
 
     segments : {segments}
-
+    
     /nothink
 """
 
@@ -251,11 +268,11 @@ def think_remover(res: str):
     return cleaned_res
 
 
-try:
-    ollama_llm = ChatOllama(model="qwen3:8b")
-except:
-    print("14b model not available, using 8b model")
-    ollama_llm = ChatOllama(model="qwen3:8b")
+# try:
+#     ollama_llm = ChatOllama(model="qwen3:8b")
+# except:
+#     print("14b model not available, using 8b model")
+#     ollama_llm = ChatOllama(model="qwen3:8b")
 
 # with open("feroz_context.txt", 'r') as f:
 #     context = f.read()

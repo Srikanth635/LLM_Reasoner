@@ -68,12 +68,8 @@
   },
   "Opening": {
     "action_core": "Opening",
-    "action_roles": ["obj_to_be_opened", "action_verb"]
-  },
-  "OpeningADoor": {
-    "action_core": "OpeningADoor",
     "action_roles": ["obj_to_be_opened", "action_verb"],
-    "cram_plan": "(perform (an action (type open-door) (a location (on {obj_to_be_opened}){obj_to_be_opened_props})))"
+    "cram_plan": "(perform (an action (type open-object) (an object (type {obj_to_be_opened}){obj_to_be_opened_props})))"
   },
   "OperatingATap": {
     "action_core": "OperatingATap",
@@ -87,9 +83,9 @@
   },
   "Pouring": {
     "action_core": "Pouring",
-    "action_roles": ["stuff", "goal", "action_verb", "unit", "amount"],
-    "required_action_roles": ["stuff", "goal", "action_verb"],
-    "cram_plan": "(perform (an action (type pour-from-container) (source (an object (type container.n.01) (contains (a substance (type {stuff}){stuff_props}))))(count (unit {unit}){unit_props}(number {amount}){amount_props}))(a location (in {goal}){goal_props}))"
+    "action_roles": ["stuff", "source", "goal", "action_verb", "unit", "amount"],
+    "required_action_roles": ["stuff", "source", "goal", "action_verb"],
+    "cram_plan": "(perform (an action (type pour-from-container) (source (an object (type {source}){source_props}) (contains (a substance (type {stuff}){stuff_props}))))(count (unit {unit}){unit_props}(number {amount}){amount_props}))(a location (in {goal}){goal_props}))"
   },
   "Preheating": {
     "action_core": "Preheating",

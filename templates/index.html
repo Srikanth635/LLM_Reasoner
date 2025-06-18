@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Designator Data Display</title>
+    <title>Designator Datastructure</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -295,19 +295,19 @@
     </style>
 </head>
 <body>
-    <h1>Designator Data Display</h1>
+    <h1>Designator Data Structure</h1>
 
     <div class="container">
         <div class="tab-navigation">
             <button class="tab-button active" onclick="switchTab(1)"><span>Raw Segment Data</span></button>
-            <button class="tab-button" onclick="switchTab(2)"><span>Parsed Segment Data</span></button>
-            <button class="tab-button" onclick="switchTab(3)"><span>CRAM Designator Data</span></button>
-            <button class="tab-button" onclick="switchTab(4)"><span>Models Data</span></button>
+            <button class="tab-button" onclick="switchTab(2)"><span>Segment Instructions</span></button>
+            <button class="tab-button" onclick="switchTab(3)"><span>CRAM Plan Executive</span></button>
+            <button class="tab-button" onclick="switchTab(4)"><span>Models</span></button>
 
             <div class="test-controls">
-                <h4>Triggers</h4>
+                <h4>Generators</h4>
                 <div class="trigger-wrapper"><button class="test-button" onclick="sendTestData(this, 1)">Segmented Data</button><span class="loader" id="loader-1"></span></div>
-                <div class="trigger-wrapper"><button class="test-button" onclick="sendTestData(this, 2)">Parsed Data</button><span class="loader" id="loader-2"></span></div>
+                <div class="trigger-wrapper"><button class="test-button" onclick="sendTestData(this, 2)">Segment Instructions</button><span class="loader" id="loader-2"></span></div>
                 <div class="trigger-wrapper"><button class="test-button" onclick="sendTestData(this, 3)">CRAM Data</button><span class="loader" id="loader-3"></span></div>
                 <div class="trigger-wrapper"><button class="test-button" onclick="sendTestData(this, 4)">Models Data</button><span class="loader" id="loader-4"></span></div>
             </div>
