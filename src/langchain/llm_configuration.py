@@ -13,7 +13,7 @@ from langchain_ollama import ChatOllama
 
 try:
     print("Trying OLLAMA model 8b")
-    ollama_llm = ChatOllama(model="qwen3:14b")
+    ollama_llm = ChatOllama(model="qwen3:8b")
     ollama_llm_small = ChatOllama(model="qwen3:8b")
     print("OLLAMA model found")
 except:
