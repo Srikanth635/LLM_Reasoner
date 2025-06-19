@@ -1,6 +1,6 @@
 from src.langchain_flow.create_agents import *
 from src.langchain_flow.agents.enhanced_ad_agent import enhanced_ad_agent_node
-from src.langchain_flow.models_graph import models_node
+from src.langchain_flow.agents.models_agent import models_node
 from src.langchain_flow.state_graph import StateModel
 from langgraph.graph import StateGraph,START
 

@@ -1,7 +1,6 @@
 from flask import Flask, request, jsonify
-from src.langchain_flow.e2e_workflow import *
-from src.langchain_flow.models_graph import *
-from src.langchain_flow.agents.reasoner_agent import *
+from src.langchain_flow.agents.models_agent import *
+from src.langchain_flow.agents.old_agents.reasoner_agent import *
 import requests
 
 app = Flask(__name__)

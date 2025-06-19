@@ -4,7 +4,7 @@ from langgraph.checkpoint.memory import MemorySaver
 from src.langchain_flow.agent_supervisor import supervisor_node
 from src.langchain_flow.agents.framenet_agent import framenet_node
 from src.langchain_flow.agents.flanagan_agent import flanagan_node
-from src.langchain_flow.agents.math_agent import math_node
+from src.langchain_flow.agents.old_agents.math_agent import math_node
 # from src.langchain.agents.websearch_agent import web_research_node
 from dotenv import load_dotenv, find_dotenv
 load_dotenv(find_dotenv(), override=True)
