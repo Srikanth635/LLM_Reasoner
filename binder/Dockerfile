@@ -1,6 +1,29 @@
 FROM ollama/ollama:latest
 
-USER root
+ENV NB_USER=jovyan
+
+RUN apt update && \
+    apt install -y \
+        gdb g++ clang cmake make doxygen \
+        libeigen3-dev \
+        libspdlog-dev \
+        libraptor2-dev \
+        librdf0 \
+        librdf0-dev \
+        libmongoc-1.0-0 \
+        libmongoc-dev \
+        libgtest-dev \
+        libfmt-dev \
+        software-properties-common \
+        git \
+        wget \
+        curl \
+        gnupg \
+        sudo \
+        python3 \
+        python3-dev \
+        python3-pip \
+        python3-setuptools
 
 # Pre-pull models during image build
 RUN ollama serve & \
@@ -42,25 +65,15 @@ RUN apt-get update && \
     && dpkg-reconfigure --frontend noninteractive tzdata \
     && rm -rf /var/lib/apt/lists/*
 
-# Download and install Python 3.11.11
-RUN wget https://www.python.org/ftp/python/3.11.11/Python-3.11.11.tgz && \
-    tar xzf Python-3.11.11.tgz && \
-    cd Python-3.11.11 && \
-    ./configure --enable-optimizations --prefix=/usr/local && \
-    make -j$(nproc) && \
-    make altinstall && \
-    cd .. && \
-    rm -rf Python-3.11.11 Python-3.11.11.tgz
+USER root
 
-# Create symlinks for python3 and pip3
-RUN ln -s /usr/local/bin/python3.11 /usr/local/bin/python3 && \
-    ln -s /usr/local/bin/pip3.11 /usr/local/bin/pip3
-
-# Upgrade pip
-RUN /usr/local/bin/python3.11 -m pip install --upgrade pip
+RUN conda create -n agentic_ai311 python=3.11 -y && \
+    echo "source /opt/conda/etc/profile.d/conda.sh" >> /home/${NB_USER}/.bashrc && \
+    echo "conda activate agentic_ai311" >> /home/${NB_USER}/.bashrc && \
+    chown ${NB_USER}:users /home/${NB_USER}/.bashrc
 
 # Set working directory
-WORKDIR /home/${NB_USER}/app
+WORKDIR /home/${NB_USER}
 
 USER ${NB_USER}
 
@@ -71,7 +84,7 @@ COPY --chown=${NB_USER}:users start_services.sh ./LLM_Reasoner
 RUN chmod +x ./LLM_Reasoner/start_services.sh
 
 # Set working directory
-WORKDIR /home/${NB_USER}/app/LLM_Reasoner
+WORKDIR /home/${NB_USER}/LLM_Reasoner
 
 EXPOSE 5000
 
