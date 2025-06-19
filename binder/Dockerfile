@@ -15,7 +15,6 @@ RUN mkdir -p /usr/share/ollama && \
     chown ollama:ollama /usr/share/ollama
 
 # Switch to ollama user for model download (optional - see note below)
-USER ollama
 
 # Pre-pull models during image build
 RUN ollama serve & \
