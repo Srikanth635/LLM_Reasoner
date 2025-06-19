@@ -30,8 +30,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
     DEBIAN_FRONTEND=noninteractive \
     TZ=UTC \
-    OLLAMA_HOST=0.0.0.0:11434 \
-    PATH="/home/${NB_USER}/.local/bin:${PATH}"
+    OLLAMA_HOST=0.0.0.0:11434
 
 # # Set working directory
 # WORKDIR /app
@@ -71,10 +70,9 @@ WORKDIR /home/${NB_USER}
 USER ${NB_USER}
 
 COPY --chown=${NB_USER}:users . ./LLM_Reasoner
-# RUN conda install -n agentic_ai311 --yes --file LLM_Reasoner/requirements.txt
-RUN conda init bash && \
-    . /home/${NB_USER}/.bashrc && \
-    pip install --no-cache-dir -r LLM_Reasoner/requirements.txt
+
+SHELL ["conda", "run", "-n", "agentic_ai311", "/bin/bash", "-c"]
+RUN pip install --no-cache-dir -r LLM_Reasoner/requirements.txt
 
 COPY --chown=${NB_USER}:users start_services.sh ./LLM_Reasoner
 RUN chmod +x ./LLM_Reasoner/start_services.sh
@@ -86,6 +84,6 @@ EXPOSE 5000
 
 COPY --chown=${NB_USER}:users binder/webapps.json ${ROS_WS}/src/rvizweb/webapps/app.json
 
-#ENTRYPOINT ["/start_services.sh"]
-#
+ENTRYPOINT []
+
 CMD ["bash", "./start_services.sh"]
