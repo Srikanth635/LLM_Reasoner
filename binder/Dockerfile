@@ -1,5 +1,7 @@
 FROM intel4coro/base-notebook:20.04-noetic-vnc
 
+USER root
+
 #FROM ollama/ollama:latest
 RUN curl -L https://ollama.com/download/ollama-linux-amd64.tgz -o ollama-linux-amd64.tgz && \
     tar -C /usr -xzf ollama-linux-amd64.tgz && \
