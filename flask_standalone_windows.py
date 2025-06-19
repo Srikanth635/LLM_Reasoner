@@ -170,7 +170,7 @@ def generate_test_data_for_window2():
     final_state = workflow.invoke(initial_state(summary_str))
     final_parse = final_state["final_instructions"]
     final_parse_str = "".join(final_parse)
-    final_parse = final_parse_str.split(".")
+    final_parse = [ele for ele in final_parse_str.split(".") if ele]
     for par in final_parse:
         if par:
             print("📡 Sending test data to 2nd window...")
@@ -210,7 +210,7 @@ def generate_test_data_for_window4():
     config = {"configurable" : {"thread_id" : 1}}
     framenet_model = ""
     flanagan = ""
-    for out in graph_output[:3]:
+    for out in graph_output[:1]:
         print("<UNK> Sending test data to 4th window...")
         instruction = out['instruction']
         action_core = out['action_core']

@@ -27,7 +27,7 @@ from typing import TypedDict,List, Optional, Union, Dict
 from src.langchain.llm_configuration import *
 import re
 import json
-from pydantic import BaseModel
+from pydantic import BaseModel,Field
 
 class StructuredActivity(BaseModel):
     intent: str
@@ -38,6 +38,10 @@ class StructuredActivity(BaseModel):
     modifier: Optional[str] = None
     quantity: Optional[str] = None
     duration: Optional[str] = None
+
+class OrderedInstructions(BaseModel):
+    instructions: List[str] = Field(description="List of Robot Actionable sequence of instructions in Natural language")
+
 
 TaskObjectiveAgent_prompt_template = """
     You are an intelligent task reasoning assistant.
@@ -176,8 +180,11 @@ Your task is to:
 
 [peel, cut, pick up, lift, open, operate tap, pipette, pour, press, pull, place, remove, roll, shake, spoon, sprinkle, stir, take, turn, unscrew, wait]
 
-Return only the final, corrected instruction list — one instruction per line in execution order.
-Do not add commentary, explanation, or formatting.
+### EXPECTED OUTPUT: ###
+** Return only the final, corrected instruction list — one instruction per line in execution order.
+Do not add commentary, explanation, or formatting or feedback. **
+
+/nothink
 """
 
 def think_remover(res : str):
@@ -281,16 +288,18 @@ def instruction_refinement_agent(state: SystemState):
     joined = "\n".join(raw_instructions)
 
     prompt = InstructionRefinementAgent_prompt_template.strip() + "\n\nInstructions:\n" + joined
-    result = ollama_llm.invoke(prompt)
-    result_cleaned = think_remover(result.content)
-    refined_lines = [
-        line.strip()
-        for line in result_cleaned.strip().splitlines()
-        if line.strip() and not line.strip().startswith(("Final answer", "Instructions:", "---"))
-    ]
-
-    state["final_instructions"] = refined_lines
-    print("Refined Instructions:\n", "\n".join(refined_lines))
+    ollama_llm_structured = ollama_llm.with_structured_output(OrderedInstructions, method="json_schema")
+    result = ollama_llm_structured.invoke(prompt)
+    # result_cleaned = think_remover(result.content)
+    # refined_lines = [
+    #     line.strip()
+    #     for line in result.content.strip().splitlines()
+    #     if line.strip() and not line.strip().startswith(("Final answer", "Instructions:", "---"))
+    # ]
+    state["final_instructions"] = result.model_dump()["instructions"]
+    print("Refined Instructions: ", state["final_instructions"])
+    # state["final_instructions"] = refined_lines
+    # print("Refined Instructions:\n", "\n".join(refined_lines))
     return state
 
 # LangGraph DAG construction
