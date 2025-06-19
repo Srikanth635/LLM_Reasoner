@@ -19,8 +19,8 @@ cleanup() {
 trap cleanup EXIT
 
 # Run any startup tasks you need
-echo "Importing Jupyter Lab workspaces..."
-jupyter lab workspaces import ${PWD}/binder/jupyterlab.jupyterlab-workspace
+#echo "Importing Jupyter Lab workspaces..."
+#jupyter lab workspaces import ${PWD}/binder/jupyterlab.jupyterlab-workspace
 
 # The final command should run in the foreground using exec.
 # This makes 'ollama serve' the main process of the container.
