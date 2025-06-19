@@ -67,11 +67,12 @@ RUN conda create -n agentic_ai311 python=3.11 -y && \
 # Set working directory
 WORKDIR /home/${NB_USER}
 
-USER ${NB_USER}
+#USER ${NB_USER}
 
 COPY --chown=${NB_USER}:users . ./LLM_Reasoner
 
 SHELL ["conda", "run", "-n", "agentic_ai311", "/bin/bash", "-c"]
+ENV PATH="/home/jovyan/.local/bin:${PATH}"
 RUN pip install --no-cache-dir -r LLM_Reasoner/requirements.txt
 
 RUN python -m ipykernel install --user --name "agentic_ai311" --display-name "Python (Agentic AI)"
