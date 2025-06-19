@@ -1,16 +1,14 @@
 import os.path
-
-from pydantic import BaseModel
 import json
-from src.langchain.llm_configuration import *
-from typing import TypedDict, Union, Optional
+from src.langchain_flow.llm_configuration import *
+from typing import TypedDict, Union
 from langgraph.graph import StateGraph,START,END, MessagesState
 from langchain_core.prompts import ChatPromptTemplate
 import re
-from pydantic import BaseModel
-from pathlib import Path
 from src.resources.pycram.cram_models import *
-from src.langchain.state_graph import StateModel
+from src.langchain_flow.state_graph import *
+from langgraph.checkpoint.memory import MemorySaver
+enhanced_ad_memory = MemorySaver()
 
 action_classes = [Peeling,Adding,
     Arranging,
@@ -714,7 +712,7 @@ cram_plan_prompt_template = """
 """
 
 # Nodes
-def action_node(state: StateModel):
+def action_node(state: ADStateInternal):
     print("INSIDE ACTION NODE")
 
     instruction = state["instruction"]
@@ -739,8 +737,8 @@ def action_node(state: StateModel):
     except:
         raise Exception("Parsing Error , Try Rerunning", print(response))
 
-def cram_node(state : StateModel):
-    print("INSIDE UNIVERSAL NODE")
+def cram_node(state : ADStateInternal):
+    print("INSIDE CRAM NODE")
     instruction = state['instruction']
     action_core = state['action_core']
     required_fields = json_data[action_core]['action_roles']
@@ -800,32 +798,31 @@ def cram_node(state : StateModel):
             'cram_plan_response': cram_plan_response}
 
 
-ad_builder = StateGraph(StateModel)
+ad_builder = StateGraph(ADStateInternal)
 ad_builder.add_node("action_node", action_node)
 ad_builder.add_node("cram_node", cram_node)
-# ad_builder.add_node("object_node", object_node)
-# ad_builder.add_node("tool_node", tool_node)
-# ad_builder.add_node("location_node", location_node)
-# ad_builder.add_node("action_designator_node", action_designator_node)
-
-# ad_builder.add_edge(START, "action_node")
-# ad_builder.add_edge(START, "object_node")
-# ad_builder.add_edge(START, "tool_node")
-# ad_builder.add_edge(START, "location_node")
-
-# ad_builder.add_edge("action_node", "action_designator_node")
-# ad_builder.add_edge("object_node", "action_designator_node")
-# ad_builder.add_edge("tool_node", "action_designator_node")
-# ad_builder.add_edge("location_node", "action_designator_node")
-
-# ad_builder.add_edge("action_designator_node", END)
-
-
 ad_builder.add_edge(START, "action_node")
 ad_builder.add_edge("action_node","cram_node")
 ad_builder.add_edge("cram_node",END)
 
-ad_graph = ad_builder.compile()
+enhanced_ad_graph = ad_builder.compile(checkpointer=enhanced_ad_memory)
+
+
+def enhanced_ad_agent_node(state : StateModel):
+
+    instruction = state['instruction']
+
+    final_internal_state = enhanced_ad_graph.invoke({'instruction' : instruction})
+
+    action_type = final_internal_state['action_type']
+    action_core = final_internal_state['action_core']
+    action_core_attributes = final_internal_state['action_core_attributes']
+    enriched_action_core_attributes = final_internal_state['enriched_action_core_attributes']
+    cram_plan_response = final_internal_state['cram_plan_response']
+
+    return {'action_type': action_type, 'action_core': action_core, 'action_core_attributes': action_core_attributes,
+    'enriched_action_core_attributes': enriched_action_core_attributes, 'cram_plan_response': cram_plan_response}
+
 
 if __name__ == "__main__":
     print()
@@ -836,7 +833,7 @@ if __name__ == "__main__":
     #
     # print(ad_graph.invoke({"instruction": "cut the apple into 2 slices using black knife"}))
 
-    print(ad_graph.invoke({"instruction": "pick up the cooking pan from the wooden drawer"}))
+    print(enhanced_ad_graph.invoke({"instruction": "pick up the cooking pan from the wooden drawer"}))
 
     # print(json_path)
     # print(json_data['Pouring'])

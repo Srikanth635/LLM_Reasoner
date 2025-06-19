@@ -1,4 +1,4 @@
-from src.langchain.create_agents import create_agent
+from src.langchain_flow.create_agents import create_agent
 from src.resources.pycram.pycram_action_designators import (MoveTorsoAction, SetGripperAction,
         GripAction, ParkArmsAction, NavigateAction, PickUpAction, PlaceAction, ReachToPickUpAction, TransportAction,
         LookAtAction, OpenAction, CloseAction, GraspingAction, MoveAndPickUpAction, MoveAndPlaceAction, FaceAtAction,
@@ -7,8 +7,8 @@ from src.resources.pycram.pycram_action_designators import *
 from langchain_core.tools import tool
 from langchain_core.tools.structured import StructuredTool
 from langchain.agents import Tool
-from src.langchain.create_agents import *
-from src.langchain.llm_configuration import *
+from src.langchain_flow.create_agents import *
+from src.langchain_flow.llm_configuration import *
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.prompts import ChatPromptTemplate
 from typing import Dict, Type, List, Literal, Union, Annotated

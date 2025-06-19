@@ -1,14 +1,14 @@
 from http.client import responses
 from typing import Literal
-from src.langchain.create_agents import *
-from src.langchain.llm_configuration import *
+from src.langchain_flow.create_agents import *
+from src.langchain_flow.llm_configuration import *
 from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain_core.messages import HumanMessage
 from langchain_core.tools import tool
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
 from langchain.agents import Tool
-from src.langchain.state_graph import StateModel
+from src.langchain_flow.state_graph import *
 from langgraph.graph import MessagesState
 from langgraph.types import Command
 from langgraph.prebuilt import InjectedState, ToolNode
@@ -181,77 +181,50 @@ def framenet_tool(state: Annotated[dict, InjectedState]):
     framenet_answers.append(json_response)
     return json_response
 
-# @tool
-# def frame_tool(instruction: str):
-#     """
-#     Generate only Frame name of framenet for a given natural language instruction.
-#
-#     This function invokes a prompt chain using a predefined FrameNet prompt template and a language model
-#     function (llm_fn) to extract frame semantic frame name from the input instruction.
-#
-#     Args:
-#         a (str): A natural language instruction (e.g., "Pick up the bottle from the sink").
-#
-#     Returns:
-#         str : frame name suitable for given input instruction.
-#     """
-#     print("INSIDE FRAME TOOL")
-#     chain = framenet_prompt | structured_llm_fn
-#     response = chain.invoke({"input_instruction": instruction})
-#     json_response = response.model_dump_json(indent=2, by_alias=True)
-#     # return "Srikanth"
-#     return response
-
 # Framenet Agent State
 class FramenetState(TypedDict):
     framenet : Annotated[list[FrameNetRepresentation], add_messages, Field(description="Framenet Representations")]
     messages : Annotated[list, add_messages]
 
-# framenet_tool_direct_return = Tool.from_function(
-#     func=framenet_tool,
-#     name= "framenet_tool",
-#     description= "",
-#     return_direct=True  # ✅ This ensures the agent returns it as-is
-# )
 
 # Agent
 # framenet_agent = create_agent(ollama_llm, [framenet_tool], agent_state_schema=FramenetState)
 # framenet_agent = create_framenet_agent(ollama_llm, [framenet_tool], agent_state_schema=FramenetState)
-framenet_agent = create_framenet_agent(ollama_llm, [framenet_tool], agent_state_schema=FramenetState)
+# framenet_agent = create_framenet_agent(ollama_llm, [framenet_tool], agent_state_schema=FramenetState)
 
 
 # Agent as Node
-def framenet_node(state: MessagesState) -> Command[Literal["supervisor"]]:
-    # messages = [
-    #                {"role": "system", "content": framenet_system_prompt},
-    #            ] + state["messages"]
-    result = framenet_agent.invoke(state)
-    return Command(
-        update={
-            "messages": [
-                HumanMessage(content=result["messages"][-1].content, name="framenet")
-            ]
-        },
-        goto="supervisor",
-    )
+# def framenet_node(state: MessagesState) -> Command[Literal["supervisor"]]:
+#     # messages = [
+#     #                {"role": "system", "content": framenet_system_prompt},
+#     #            ] + state["messages"]
+#     result = framenet_agent.invoke(state)
+#     return Command(
+#         update={
+#             "messages": [
+#                 HumanMessage(content=result["messages"][-1].content, name="framenet")
+#             ]
+#         },
+#         goto="supervisor",
+#     )
+#
+# def framenet_node_pal(state: StateModel):
+#     # messages = [
+#     #                {"role": "system", "content": framenet_system_prompt},
+#     #            ] + state["messages"]
+#
+#     # framenet_agent_output_parser = PydanticOutputParser(pydantic_object=FrameNetRepresentation)
+#     # agent_chain = framenet_agent | framenet_agent_output_parser
+#     # result = agent_chain.invoke(state)
+#     result = framenet_agent.invoke(state)
+#
+#     return {'framenet_model': framenet_answers[-1]}
+#
+#     # return {
+#     #     "messages": result["messages"][-1]
+#     # }
 
-def framenet_node_pal(state: StateModel):
-    # messages = [
-    #                {"role": "system", "content": framenet_system_prompt},
-    #            ] + state["messages"]
-
-    # framenet_agent_output_parser = PydanticOutputParser(pydantic_object=FrameNetRepresentation)
-    # agent_chain = framenet_agent | framenet_agent_output_parser
-    # result = agent_chain.invoke(state)
-    result = framenet_agent.invoke(state)
-
-    return {'framenet_model': framenet_answers[-1]}
-
-    # return {
-    #     "messages": result["messages"][-1]
-    # }
-
-def framenet_node_pal_custom(state: StateModel):
+def framenet_node_pal_custom(state: ModelsStateInternal):
     print("INSIDE FRAMENET NODE")
     instruction = state["instruction"]
     chain = framenet_prompt | structured_ollama_llm_fn
@@ -267,4 +240,4 @@ if __name__ == "__main__":
     # test_framenet()
     # print(framenet_tool("pick up the bottle from the sink"))
     # print(fnr[0])
-    framenet_agent.invoke({'messages' : [HumanMessage(content='pick up the bottle from the sink')]})
+    # framenet_agent.invoke({'messages' : [HumanMessage(content='pick up the bottle from the sink')]})

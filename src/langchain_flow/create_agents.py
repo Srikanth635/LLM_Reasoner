@@ -8,7 +8,7 @@ from langgraph.graph import StateGraph, END, MessagesState
 from langgraph.prebuilt import ToolNode, tools_condition
 from langgraph.checkpoint.memory import MemorySaver
 
-from src.langchain.llm_configuration import *
+from src.langchain_flow.llm_configuration import *
 from pydantic import Field
 
 memory = MemorySaver()

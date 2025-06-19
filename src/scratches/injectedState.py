@@ -5,7 +5,7 @@ from langchain_core.messages import BaseMessage, AIMessage
 from langchain_core.tools import tool
 
 from langgraph.prebuilt import InjectedState, ToolNode, create_react_agent
-from src.langchain.llm_configuration import *
+from src.langchain_flow.llm_configuration import *
 from langgraph.graph import StateGraph, END, MessagesState
 
 class AgentState(TypedDict):

@@ -1,13 +1,11 @@
-from http.client import responses
-from typing import Literal
-from src.langchain.create_agents import *
-from src.langchain.llm_configuration import *
+from src.langchain_flow.create_agents import *
+from src.langchain_flow.llm_configuration import *
 from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain_core.messages import HumanMessage
 from langchain_core.tools import tool
 from langchain_core.prompts import ChatPromptTemplate
 from langchain.agents import Tool
-from src.langchain.state_graph import StateModel
+from src.langchain_flow.state_graph import *
 from langgraph.graph import MessagesState
 from langgraph.types import Command
 
@@ -767,9 +765,20 @@ flanagan_combiner_prompt = ChatPromptTemplate.from_template(flanagan_combiner_pr
 # structured_llm_fn = llm.with_structured_output(TaskModel)
 structured_ollama_llm_fl = ollama_llm.with_structured_output(TaskModel, method="json_schema")
 
+###############################Prompts & Structured LLMs flanagan END#########################################################
+
+class FlanaganStateInternal(BaseModel):
+    instruction : str
+    action_core : str
+    enriched_action_core_attributes : str
+    cram_plan_response : str
+    premotion_phase : str
+    phaser : str
+    flanagan : str
 
 
-def flanagan_premotion_node(state : StateModel):
+
+def flanagan_premotion_node(state : FlanaganStateInternal):
     """
     Generate a structured Flanagan-style task premotion phase model representation from a natural language instruction, action core
     and enriched attributes information
@@ -784,7 +793,7 @@ def flanagan_premotion_node(state : StateModel):
     print(response)
     return {'premotion_phase' : response.model_dump_json(indent=2, by_alias=True)}
 
-def flanagan_phaser_node(state:StateModel):
+def flanagan_phaser_node(state : FlanaganStateInternal):
     """
     Generate a structured Flanagan-style task phase model representation from a natural language instruction, action core,
     enriched attributes information and low level cram action designator
@@ -800,7 +809,7 @@ def flanagan_phaser_node(state:StateModel):
     print(response2)
     return {'phaser' : response2.model_dump_json(indent=2)}
 
-def flanagan_repr(state : StateModel):
+def flanagan_repr(state : FlanaganStateInternal):
     """
     Generate a structured full Flanagan-style task model representation from a predefined premotion phase and remaining
     sequential phase information.
@@ -814,64 +823,71 @@ def flanagan_repr(state : StateModel):
     print(response3)
     return {'flanagan' : response3.model_dump_json(indent=2)}
 
+flanagan_memory = MemorySaver()
+
+fbuilder = StateGraph(FlanaganStateInternal)
+fbuilder.add_node("flanagan_premotion", flanagan_premotion_node)
+fbuilder.add_node("flanagan_phaser", flanagan_phaser_node)
+fbuilder.add_node("flanagan_repr", flanagan_repr)
+fbuilder.set_entry_point("flanagan_premotion")
+
+fbuilder.add_edge("flanagan_premotion", "flanagan_phaser")
+fbuilder.add_edge("flanagan_phaser", "flanagan_repr")
+fbuilder.add_edge("flanagan_repr", END)
+
+flanagan_graph = fbuilder.compile(checkpointer=flanagan_memory)
 
 # Agent Specific Tools
-@tool
-def flanagan_tool(instruction: str):
-    """
-    Generate a structured Flanagan-style task model representation from a natural language instruction.
-
-    This tool uses a language model (LLM) with structured output based on the `TaskModel` schema to produce
-    a comprehensive, ontology-compatible JSON representation of robot task phases. It segments the action
-    into phases like PreMotion, Initiation, Execution, Interaction, Termination, and PostMotion.
-
-    The LLM output adheres to a validated Pydantic model, enabling downstream reasoning, execution,
-    or integration with robotic planning systems.
-
-    Args:
-        instruction (str): A natural language instruction (e.g., "Pour water from the bottle into the container")
-
-    Returns:
-        str: Flanagan representation of the input instruction.
-    """
-    print("INSIDE flanagan TOOL")
-    chain = flanagan_prompt | structured_ollama_llm_fl
-    response = chain.invoke({"input_instruction": instruction})
-    json_response = response.model_dump_json(indent=2, by_alias=True)
-    flanagan_answers.append(json_response)
-    return json_response
-
-
-flanagan_tool_direct_return = Tool.from_function(
-    func=flanagan_tool,
-    name= "flanagan_tool",
-    description= "flanagan representation of the input string with direct return tool output",
-    return_direct=True
-)
-
-
-# Agent
-flanagan_agent = create_agent(ollama_llm, [flanagan_tool_direct_return])
+# @tool
+# def flanagan_tool(instruction: str):
+#     """
+#     Generate a structured Flanagan-style task model representation from a natural language instruction.
+#
+#     This tool uses a language model (LLM) with structured output based on the `TaskModel` schema to produce
+#     a comprehensive, ontology-compatible JSON representation of robot task phases. It segments the action
+#     into phases like PreMotion, Initiation, Execution, Interaction, Termination, and PostMotion.
+#
+#     The LLM output adheres to a validated Pydantic model, enabling downstream reasoning, execution,
+#     or integration with robotic planning systems.
+#
+#     Args:
+#         instruction (str): A natural language instruction (e.g., "Pour water from the bottle into the container")
+#
+#     Returns:
+#         str: Flanagan representation of the input instruction.
+#     """
+#     print("INSIDE flanagan TOOL")
+#     chain = flanagan_prompt | structured_ollama_llm_fl
+#     response = chain.invoke({"input_instruction": instruction})
+#     json_response = response.model_dump_json(indent=2, by_alias=True)
+#     flanagan_answers.append(json_response)
+#     return json_response
+#
+#
+# flanagan_tool_direct_return = Tool.from_function(
+#     func=flanagan_tool,
+#     name= "flanagan_tool",
+#     description= "flanagan representation of the input string with direct return tool output",
+#     return_direct=True
+# )
 
 
-# Agent as Node
-def flanagan_node(state: MessagesState) -> Command[Literal["supervisor"]]:
-    result = flanagan_agent.invoke(state)
-    return Command(
-        update={
-            "messages": [
-                HumanMessage(content=result["messages"][-1].content, name="flanagan")
-            ]
-        },
-        goto="supervisor",
-    )
 
-def flanagan_node_pal(state: MessagesState):
-    result = flanagan_agent.invoke(state)
-    return {
-            "messages": result["messages"][-1]
-        }
+def flanagan_node(state : ModelsStateInternal):
+    print()
+    instruction = state['instruction']
+    action_core = state['action_core']
+    enriched_json_attributes = state['enriched_action_core_attributes']
+    cram_plan_response = state['cram_plan_response']
 
+    final_flanagan_state = flanagan_graph.invoke({"instruction" : instruction, "action_core" : action_core, "enriched_action_core_attributes" : enriched_json_attributes,
+                           "cram_plan_response" : cram_plan_response})
+
+    premotion_phase = final_flanagan_state['premotion_phase']
+    phaser = final_flanagan_state['phaser']
+    flanagan = final_flanagan_state['flanagan']
+
+    return {'premotion_phase' : premotion_phase, 'phaser' : phaser, 'flanagan' : flanagan}
 
 if __name__ == "__main__":
     print("INSIDE MAIN")
@@ -902,49 +918,49 @@ if __name__ == "__main__":
     #     # return "Srikanth"
     #     return response
 
-    instruction = "pick up the cooking pan from the wooden drawer"
-    action_core = "PickingUp"
-    enriched_json_attributes = """
-         {  "obj_to_be_grabbed": "cooking pan",  "obj_to_be_grabbed_props": {    "material": "metal",    "shape": "rectangular",    "handle": "present"  },  "action_verb": "pick up",  "location": "wooden drawer",  "location_props": {    "material": "wood",   "shape": "rectangular" }}
-    """
-    cram_plan_ex =  '(perform (an action (type grab-object) (an object (type cooking pan) (material metal) (shape rectangular) (size medium)) (source (a location (on wooden drawer) (material wood) (shape rectangular) (type drawer)))))'
-
-    premotion_phase_ex = """
-        goal_definition=GoalDefinition(task='PickingUp cooking pan', semantic_annotation='TaskClass:Manipulation.PickingUp', 
-        object=ObjectModel(id='cooking_pan_01', type='PhysicalArtifact', properties=ObjectProperties(size=None, texture=None, 
-        material='metal', fill_level=None, contents=None, hardness=None, friction_coefficient=None, elasticity=None, strain_limit=1000000000000000.0), 
-        expected_end_state=GoalState(conditions={'is_grabbed': {'is_grabbed': True}})), target=None, tool=ToolModel(id='gripper_main', 
-        type='Gripper', properties={})) predictive_model=PredictiveModel(expected_trajectory='StandardApproachPath', 
-        expected_force={'initial_N': 1.5, 'resistance_range_N': [1.0, 2.0]}, confidence_level=0.95, affordance_model=
-        {'tool_affords_grabbing': True, 'object_affords_being_grabbed': True}) motion_planning=MotionPlanning(planned_trajectory='GenericPathToTarget', 
-        obstacle_avoidance='ReactiveSensorBased', energy_efficiency='Balanced')
-    """
-
-    phaser_ex = """
-        task='PickingUp cooking pan' initiation_phase=InitialPhase(initial_state=InitialState(robot_pose={'arm': [0.4, 0.2, 0.5], 
-        'gripper': [0.5, 0.5, 0.5]}, tool_position=[0.3, 0.2, 0.4], target_object_position=[0.6, 0.3, 0.4]), motion_initialization=MotionInitialization
-        (joint_activation={'arm': 0.4, 'gripper': 0.3}, velocity_profile='slow', motion_priming={'gripper_state': False, 'gripper_position': False}), 
-        SubPhases=[SubPhase(name='ReachForObject', description='Move end-effector towards the cooking pan.', goalState=[GoalState(conditions={'ObjectState': 
-        {'cooking_pan_01.IsInRange': True}})]), SubPhase(name='PreGrasp', description='Prepare the gripper to grasp the cooking pan.', 
-        goalState=[GoalState(conditions={'GripperState': {'gripper_main.IsOpen': False}})]), SubPhase(name='GraspObject', 
-        description='Secure the grip on the cooking pan.', goalState=[GoalState(conditions={'ObjectState': {'cooking_pan_01.IsGrabbed': True}})])], 
-        SymbolicGoals=[GoalState(conditions={'goal': {'is_grabbed': True}})], SemanticAnnotation='PhaseClass:Initiation') 
-        execution_phase=Phase(SubPhases=[SubPhase(name='LiftObject', description='Lift the cooking pan from the drawer.', 
-        goalState=[GoalState(conditions={'ObjectState': {'cooking_pan_01.IsLifted': True}})]), SubPhase(name='Transport', 
-        description='Move the cooking pan to a stable position.', goalState=[GoalState(conditions={'ObjectState': {'cooking_pan_01.IsStable': True}})])], 
-        SymbolicGoals=[GoalState(conditions={'goal': {'is_lifted': True}})], SemanticAnnotation='PhaseClass:Execution') 
-        interaction_phase=Phase(SubPhases=[SubPhase(name='ConfirmGrasp', description='Confirm that the cooking pan is securely grasped.', 
-        goalState=[GoalState(conditions={'ObjectState': {'cooking_pan_01.IsSecure': True}})])], 
-        SymbolicGoals=[GoalState(conditions={'goal': {'is_secure': True}})], SemanticAnnotation='PhaseClass:Interaction') 
-        termination_phase=Phase(SubPhases=[SubPhase(name='ReleaseObject', description='Release the cooking pan from the gripper.', 
-        goalState=[GoalState(conditions={'ObjectState': {'cooking_pan_01.IsReleased': True}})]), SubPhase(name='RetractGripper', 
-        description='Move the gripper to a safe position.', goalState=[GoalState(conditions={'GripperState': {'gripper_main.IsOpen': True}})])], 
-        SymbolicGoals=[GoalState(conditions={'goal': {'is_released': True}})], SemanticAnnotation='PhaseClass:Termination') 
-        post_motion_phase=Phase(SubPhases=[SubPhase(name='ReturnToHome', description='Return the end-effector to the home position.', 
-        goalState=[GoalState(conditions={'RobotState': {'arm.IsAtHome': True}})]), SubPhase(name='UpdateWorldModel', 
-        description='Update the world model to reflect the new state of the cooking pan.', goalState=[GoalState(conditions={'SystemState': 
-        {'KnowledgeBase.IsUpdated': True}})])], SymbolicGoals=[GoalState(conditions={'goal': {'task_complete': True}})], SemanticAnnotation='PhaseClass:PostMotion')
-    """
-    # flanagan_premotion_tool(instruction=instruction, action_core=action_core, enriched_json_attributes=enriched_json_attributes)
-    # flanagan_phaser_tool(premotion_phase=premotion_phase_ex, cram_plan=cram_plan_ex, action_core=action_core, instruction=instruction)
-    flanagan_repr(premotion_phase=premotion_phase_ex, phaser=phaser_ex)
+    # instruction = "pick up the cooking pan from the wooden drawer"
+    # action_core = "PickingUp"
+    # enriched_json_attributes = """
+    #      {  "obj_to_be_grabbed": "cooking pan",  "obj_to_be_grabbed_props": {    "material": "metal",    "shape": "rectangular",    "handle": "present"  },  "action_verb": "pick up",  "location": "wooden drawer",  "location_props": {    "material": "wood",   "shape": "rectangular" }}
+    # """
+    # cram_plan_ex =  '(perform (an action (type grab-object) (an object (type cooking pan) (material metal) (shape rectangular) (size medium)) (source (a location (on wooden drawer) (material wood) (shape rectangular) (type drawer)))))'
+    #
+    # premotion_phase_ex = """
+    #     goal_definition=GoalDefinition(task='PickingUp cooking pan', semantic_annotation='TaskClass:Manipulation.PickingUp',
+    #     object=ObjectModel(id='cooking_pan_01', type='PhysicalArtifact', properties=ObjectProperties(size=None, texture=None,
+    #     material='metal', fill_level=None, contents=None, hardness=None, friction_coefficient=None, elasticity=None, strain_limit=1000000000000000.0),
+    #     expected_end_state=GoalState(conditions={'is_grabbed': {'is_grabbed': True}})), target=None, tool=ToolModel(id='gripper_main',
+    #     type='Gripper', properties={})) predictive_model=PredictiveModel(expected_trajectory='StandardApproachPath',
+    #     expected_force={'initial_N': 1.5, 'resistance_range_N': [1.0, 2.0]}, confidence_level=0.95, affordance_model=
+    #     {'tool_affords_grabbing': True, 'object_affords_being_grabbed': True}) motion_planning=MotionPlanning(planned_trajectory='GenericPathToTarget',
+    #     obstacle_avoidance='ReactiveSensorBased', energy_efficiency='Balanced')
+    # """
+    #
+    # phaser_ex = """
+    #     task='PickingUp cooking pan' initiation_phase=InitialPhase(initial_state=InitialState(robot_pose={'arm': [0.4, 0.2, 0.5],
+    #     'gripper': [0.5, 0.5, 0.5]}, tool_position=[0.3, 0.2, 0.4], target_object_position=[0.6, 0.3, 0.4]), motion_initialization=MotionInitialization
+    #     (joint_activation={'arm': 0.4, 'gripper': 0.3}, velocity_profile='slow', motion_priming={'gripper_state': False, 'gripper_position': False}),
+    #     SubPhases=[SubPhase(name='ReachForObject', description='Move end-effector towards the cooking pan.', goalState=[GoalState(conditions={'ObjectState':
+    #     {'cooking_pan_01.IsInRange': True}})]), SubPhase(name='PreGrasp', description='Prepare the gripper to grasp the cooking pan.',
+    #     goalState=[GoalState(conditions={'GripperState': {'gripper_main.IsOpen': False}})]), SubPhase(name='GraspObject',
+    #     description='Secure the grip on the cooking pan.', goalState=[GoalState(conditions={'ObjectState': {'cooking_pan_01.IsGrabbed': True}})])],
+    #     SymbolicGoals=[GoalState(conditions={'goal': {'is_grabbed': True}})], SemanticAnnotation='PhaseClass:Initiation')
+    #     execution_phase=Phase(SubPhases=[SubPhase(name='LiftObject', description='Lift the cooking pan from the drawer.',
+    #     goalState=[GoalState(conditions={'ObjectState': {'cooking_pan_01.IsLifted': True}})]), SubPhase(name='Transport',
+    #     description='Move the cooking pan to a stable position.', goalState=[GoalState(conditions={'ObjectState': {'cooking_pan_01.IsStable': True}})])],
+    #     SymbolicGoals=[GoalState(conditions={'goal': {'is_lifted': True}})], SemanticAnnotation='PhaseClass:Execution')
+    #     interaction_phase=Phase(SubPhases=[SubPhase(name='ConfirmGrasp', description='Confirm that the cooking pan is securely grasped.',
+    #     goalState=[GoalState(conditions={'ObjectState': {'cooking_pan_01.IsSecure': True}})])],
+    #     SymbolicGoals=[GoalState(conditions={'goal': {'is_secure': True}})], SemanticAnnotation='PhaseClass:Interaction')
+    #     termination_phase=Phase(SubPhases=[SubPhase(name='ReleaseObject', description='Release the cooking pan from the gripper.',
+    #     goalState=[GoalState(conditions={'ObjectState': {'cooking_pan_01.IsReleased': True}})]), SubPhase(name='RetractGripper',
+    #     description='Move the gripper to a safe position.', goalState=[GoalState(conditions={'GripperState': {'gripper_main.IsOpen': True}})])],
+    #     SymbolicGoals=[GoalState(conditions={'goal': {'is_released': True}})], SemanticAnnotation='PhaseClass:Termination')
+    #     post_motion_phase=Phase(SubPhases=[SubPhase(name='ReturnToHome', description='Return the end-effector to the home position.',
+    #     goalState=[GoalState(conditions={'RobotState': {'arm.IsAtHome': True}})]), SubPhase(name='UpdateWorldModel',
+    #     description='Update the world model to reflect the new state of the cooking pan.', goalState=[GoalState(conditions={'SystemState':
+    #     {'KnowledgeBase.IsUpdated': True}})])], SymbolicGoals=[GoalState(conditions={'goal': {'task_complete': True}})], SemanticAnnotation='PhaseClass:PostMotion')
+    # """
+    # # flanagan_premotion_tool(instruction=instruction, action_core=action_core, enriched_json_attributes=enriched_json_attributes)
+    # # flanagan_phaser_tool(premotion_phase=premotion_phase_ex, cram_plan=cram_plan_ex, action_core=action_core, instruction=instruction)
+    # flanagan_repr(premotion_phase=premotion_phase_ex, phaser=phaser_ex)

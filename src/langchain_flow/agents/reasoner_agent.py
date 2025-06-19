@@ -1,4 +1,4 @@
-from src.langchain.llm_configuration import *
+from src.langchain_flow.llm_configuration import *
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import JsonOutputParser
 import re
