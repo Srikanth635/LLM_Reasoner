@@ -26,4 +26,6 @@ jupyter lab workspaces import ${PWD}/binder/jupyterlab.jupyterlab-workspace
 # This makes 'ollama serve' the main process of the container.
 # The container will stay alive as long as 'ollama serve' is running.
 echo "Starting Ollama service in the foreground..."
-exec ollama serve
+exec ollama serve &
+
+wait -n

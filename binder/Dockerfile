@@ -19,7 +19,7 @@ RUN mkdir -p /usr/share/ollama && \
 # Pre-pull models during image build
 RUN ollama serve & \
     sleep 10 && \
-    ollama pull qwen3:0.6b && \
+    ollama pull qwen3:14b && \
     pkill ollama
 
 
