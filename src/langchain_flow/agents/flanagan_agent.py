@@ -767,7 +767,7 @@ structured_ollama_llm_fl = ollama_llm.with_structured_output(TaskModel, method="
 
 ###############################Prompts & Structured LLMs flanagan END#########################################################
 
-class FlanaganStateInternal(BaseModel):
+class FlanaganStateInternal(TypedDict):
     instruction : str
     action_core : str
     enriched_action_core_attributes : str
@@ -871,13 +871,11 @@ flanagan_graph = fbuilder.compile(checkpointer=flanagan_memory)
 #     return_direct=True
 # )
 
-
-
 def flanagan_node(state : ModelsStateInternal):
-    print()
+    print("FLANAGAN NODE STATE ", state)
     instruction = state['instruction']
     action_core = state['action_core']
-    enriched_json_attributes = state['enriched_action_core_attributes']
+    enriched_json_attributes = str(state['enriched_action_core_attributes'])
     cram_plan_response = state['cram_plan_response']
 
     final_flanagan_state = flanagan_graph.invoke({"instruction" : instruction, "action_core" : action_core, "enriched_action_core_attributes" : enriched_json_attributes,

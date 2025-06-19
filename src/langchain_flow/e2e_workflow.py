@@ -33,7 +33,7 @@ builder.add_edge(START, "ad_agent_node")
 builder.add_edge("ad_agent_node","models_node")
 builder.add_edge("models_node", "aggregator")
 builder.add_edge("aggregator", END)
-e2e_graph = builder.compile()
+e2e_graph = builder.compile(checkpointer=e2e_memory)
 
 
 
