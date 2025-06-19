@@ -14,3 +14,4 @@ langgraph-supervisor==0.0.21
 langsmith==0.3.13
 langchain-ollama
 flask-socketio
+ipykernel

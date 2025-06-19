@@ -74,8 +74,10 @@ COPY --chown=${NB_USER}:users . ./LLM_Reasoner
 SHELL ["conda", "run", "-n", "agentic_ai311", "/bin/bash", "-c"]
 RUN pip install --no-cache-dir -r LLM_Reasoner/requirements.txt
 
-COPY --chown=${NB_USER}:users start_services.sh ./LLM_Reasoner
-RUN chmod +x ./LLM_Reasoner/start_services.sh
+RUN python -m ipykernel install --user --name "agentic_ai311" --display-name "Python (Agentic AI)"
+
+COPY --chown=${NB_USER}:users start_services.sh /home/${NB_USER}/LLM_Reasoner
+RUN chmod +x /home/${NB_USER}/LLM_Reasoner/start_services.sh
 
 # Set working directory
 WORKDIR /home/${NB_USER}/LLM_Reasoner
