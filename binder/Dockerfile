@@ -1,29 +1,8 @@
-FROM ollama/ollama:latest
+FROM intel4coro/base-notebook:20.04-noetic-vnc
 
-ENV NB_USER=jovyan
-
-RUN apt update && \
-    apt install -y \
-        gdb g++ clang cmake make doxygen \
-        libeigen3-dev \
-        libspdlog-dev \
-        libraptor2-dev \
-        librdf0 \
-        librdf0-dev \
-        libmongoc-1.0-0 \
-        libmongoc-dev \
-        libgtest-dev \
-        libfmt-dev \
-        software-properties-common \
-        git \
-        wget \
-        curl \
-        gnupg \
-        sudo \
-        python3 \
-        python3-dev \
-        python3-pip \
-        python3-setuptools
+#FROM ollama/ollama:latest
+RUN curl -L https://ollama.com/download/ollama-linux-amd64.tgz -o ollama-linux-amd64.tgz && \
+    sudo tar -C /usr -xzf ollama-linux-amd64.tgz \
 
 # Pre-pull models during image build
 RUN ollama serve & \
@@ -87,6 +66,8 @@ RUN chmod +x ./LLM_Reasoner/start_services.sh
 WORKDIR /home/${NB_USER}/LLM_Reasoner
 
 EXPOSE 5000
+
+COPY --chown=${NB_USER}:users binder/webapps.json ${ROS_WS}/src/rvizweb/webapps/app.json
 
 ENTRYPOINT []
 

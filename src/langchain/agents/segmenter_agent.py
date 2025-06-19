@@ -51,7 +51,8 @@ TaskObjectiveAgent_prompt_template = """
     Respond with one concise sentence that clearly expresses the overall objective of the task.
     
     ---
-
+    
+    /nothink
 """
 
 ActivityExtractionAgent_prompt_template = """
@@ -64,6 +65,7 @@ ActivityExtractionAgent_prompt_template = """
     Your job is to identify the **atomic action(s)** performed in this segment, as well as all related **entities** and **roles**. If multiple
     distinct actions are performed in one segment, output each one as a separate entry.
     
+    ** IMPORTANT CONSIDERATION **
     You must restrict the "intent" field to one of the following allowed robot action classes:
 
     [peel, cut, pick up, lift, open, operate tap, pipette, pour, press, pull, place, remove, roll, shake, spoon, sprinkle, stir, take, turn, unscrew, wait]
@@ -75,7 +77,7 @@ ActivityExtractionAgent_prompt_template = """
     ```json
     [
       {
-        "intent": "<core action verb, e.g., grasp, place, spread, open>",
+        "intent": "<core action verb, e.g., pick up, place, pour, open>",
         "object": "<main object being acted on>",
         "target": "<optional target or destination>",
         "tool": "<optional tool used, if any>",
@@ -89,28 +91,27 @@ ActivityExtractionAgent_prompt_template = """
     Include all objects, tools, modifiers, or locations mentioned. If a field is not applicable, omit it.
 
     Be accurate, extract only what is clearly described, and do not make assumptions.
-    Respond with a valid JSON array of structured actions.
+    Respond with a valid JSON array of structured actions .
     
     ---
 
 """
 
 RedundancyFilterAgent_prompt_template = """
-    You are an assistant that simplifies and deduplicates structured robot actions.
-
-    You are given a list of structured actions extracted from segmented video descriptions. Your task is to:
-    - Eliminate repeated or overlapping actions that serve the same purpose
-    - Merge fine-grained repetitions (e.g., "adjust slice", "realign slice") into a single general step
-    - Keep distinct actions that involve different tools, objects, or locations
+    You are a function that receives a JSON array of structured robot actions and returns a cleaned version of that list.
     
-    Preserve the original sequence of steps. Output a simplified, non-redundant version of the input, in the same JSON format.
+    Rules:
+    - Remove duplicate or overlapping actions.
+    - Merge fine-grained variations of the same action (e.g., "adjust", "realign").
+    - Do NOT invent or describe actions.
+    - Do NOT include commentary, explanation, notes, formatting, or headings.
+    - Do NOT return anything except the JSON array.
     
-    Do not invent new steps. Do not remove unique actions with different intents, objects, or contexts.
+    Input: A JSON array of action objects.
     
-    Respond only with a JSON array.
+    Return only: A simplified JSON array of unique actions.
     
-    ---
-
+    /nothink
 """
 
 InstructionGeneratorAgent_prompt_template = """
@@ -154,9 +155,29 @@ InstructionGeneratorAgent_prompt_template = """
     → "Place the cloth on the counter.\nPick up the jar."
     
     Return only the final instruction(s) in natural language, inserting release/place commands if needed for physical feasibility.
+    Do not add any commentary, feedback or explanation to it. The output should be just the instruction.
 
     ---
+    
+    /nothink
+"""
 
+InstructionRefinementAgent_prompt_template = """
+You are a task optimizer and robot reasoning assistant.
+
+You are given a list of robot instructions written in natural language. These commands describe physical actions for a robot with one arm to perform.
+
+Your task is to:
+- Reorder the steps if needed to match a logical and physically feasible sequence.
+- Remove redundant, duplicate, or conflicting actions.
+- Ensure that object manipulations respect physical constraints (e.g., the robot must release an object before picking up another).
+- Improve command phrasing for clarity, precision, and direct robot execution.
+- Only use action phrases from this allowed action set:
+
+[peel, cut, pick up, lift, open, operate tap, pipette, pour, press, pull, place, remove, roll, shake, spoon, sprinkle, stir, take, turn, unscrew, wait]
+
+Return only the final, corrected instruction list — one instruction per line in execution order.
+Do not add commentary, explanation, or formatting.
 """
 
 def think_remover(res : str):
@@ -243,7 +264,7 @@ def redundancy_filter_agent(state : SystemState):
 import json
 
 def instruction_generator_agent(state : SystemState):
-    filtered = state["filtered_activities"]
+    filtered = state["structured_activities"]
     # Map structured actions to natural language
     instructions = []
     for act in filtered:
@@ -255,7 +276,22 @@ def instruction_generator_agent(state : SystemState):
     print("Final Instructions: " + str(instructions) + "\n")
     return state
 
+def instruction_refinement_agent(state: SystemState):
+    raw_instructions = state["final_instructions"]
+    joined = "\n".join(raw_instructions)
 
+    prompt = InstructionRefinementAgent_prompt_template.strip() + "\n\nInstructions:\n" + joined
+    result = ollama_llm.invoke(prompt)
+    result_cleaned = think_remover(result.content)
+    refined_lines = [
+        line.strip()
+        for line in result_cleaned.strip().splitlines()
+        if line.strip() and not line.strip().startswith(("Final answer", "Instructions:", "---"))
+    ]
+
+    state["final_instructions"] = refined_lines
+    print("Refined Instructions:\n", "\n".join(refined_lines))
+    return state
 
 # LangGraph DAG construction
 graph = StateGraph(SystemState)
@@ -264,12 +300,15 @@ graph.add_node("TaskObjectiveAgent", task_objective_agent)
 graph.add_node("ActivityExtractionAgent", activity_extraction_agent)
 graph.add_node("RedundancyFilterAgent", redundancy_filter_agent)
 graph.add_node("InstructionGeneratorAgent", instruction_generator_agent)
+graph.add_node("InstructionRefinementAgent", instruction_refinement_agent)
+
 
 graph.set_entry_point("TaskObjectiveAgent")
 graph.add_edge("TaskObjectiveAgent", "ActivityExtractionAgent")
 graph.add_edge("ActivityExtractionAgent", "RedundancyFilterAgent")
 graph.add_edge("RedundancyFilterAgent", "InstructionGeneratorAgent")
-graph.add_edge("InstructionGeneratorAgent", END)
+graph.add_edge("InstructionGeneratorAgent", "InstructionRefinementAgent")
+graph.add_edge("InstructionRefinementAgent", END)
 
 # Compile
 workflow = graph.compile()

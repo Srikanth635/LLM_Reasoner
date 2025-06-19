@@ -157,7 +157,10 @@ def generate_test_data_for_window1():
 
 def generate_test_data_for_window2():
     print("Windows 2 Invoked")
-    chain = decomposer_prompt | ollama_llm.with_structured_output(AtomicsModel, method="json_schema")
+    # chain = decomposer_prompt | ollama_llm.with_structured_output(AtomicsModel, method="json_schema")
+    # final_parse = chain.invoke({'segments': summary[0]})
+    # final_parse = final_parse.atomics
+    # final_parse = decompose_segments_with_atomic_actions(chain, final_unique_segments)
     global summary
     global final_parse
     print("Invoking Model")
@@ -165,12 +168,9 @@ def generate_test_data_for_window2():
     for k, v in summary[0].items():
         summary_str.append(v)
     final_state = workflow.invoke(initial_state(summary_str))
-    # final_parse = chain.invoke({'segments': summary[0]})
-    # final_parse = final_parse.atomics
     final_parse = final_state["final_instructions"]
     final_parse_str = "".join(final_parse)
     final_parse = final_parse_str.split(".")
-    # final_parse = decompose_segments_with_atomic_actions(chain, final_unique_segments)
     for par in final_parse:
         if par:
             print("📡 Sending test data to 2nd window...")
