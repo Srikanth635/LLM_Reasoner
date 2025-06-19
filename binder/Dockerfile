@@ -70,7 +70,7 @@ WORKDIR /home/${NB_USER}
 USER ${NB_USER}
 
 COPY --chown=${NB_USER}:users . ./LLM_Reasoner
-RUN conda run -n agentic_ai311 pip install --no-cache-dir -r LLM_Reasoner/requirements.txt
+RUN conda run -n agentic_ai311 pip install --no-cache-dir --prefix=/opt/conda/envs/agentic_ai311 -r LLM_Reasoner/requirements.txt
 RUN #conda init bash && \
 #    . /home/${NB_USER}/.bashrc && \
 #    pip install --no-cache-dir -r LLM_Reasoner/requirements.txt
@@ -85,6 +85,6 @@ EXPOSE 5000
 
 COPY --chown=${NB_USER}:users binder/webapps.json ${ROS_WS}/src/rvizweb/webapps/app.json
 
-ENTRYPOINT ["/start_services.sh"]
-
-#CMD ["bash", "./start_services.sh"]
+#ENTRYPOINT ["/start_services.sh"]
+#
+CMD ["bash", "./start_services.sh"]
