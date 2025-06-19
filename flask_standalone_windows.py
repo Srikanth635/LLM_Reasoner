@@ -9,6 +9,7 @@ from src.langchain.agents.enhanced_ad_agent import *
 from src.langchain.models_graph import *
 from src.langchain.llm_configuration import *
 from pathlib import Path
+from src.langchain.agents.segmenter_agent import *
 
 graph_output = []
 summary = ""
@@ -160,12 +161,20 @@ def generate_test_data_for_window2():
     global summary
     global final_parse
     print("Invoking Model")
-    final_parse = chain.invoke({'segments': summary[0]})
-    final_parse = final_parse.atomics
+    summary_str = []
+    for k, v in summary[0].items():
+        summary_str.append(v)
+    final_state = workflow.invoke(initial_state(summary_str))
+    # final_parse = chain.invoke({'segments': summary[0]})
+    # final_parse = final_parse.atomics
+    final_parse = final_state["final_instructions"]
+    final_parse_str = "".join(final_parse)
+    final_parse = final_parse_str.split(".")
     # final_parse = decompose_segments_with_atomic_actions(chain, final_unique_segments)
     for par in final_parse:
-        print("📡 Sending test data to 2nd window...")
-        send_data_to_window(2, par)
+        if par:
+            print("📡 Sending test data to 2nd window...")
+            send_data_to_window(2, par.strip())
 
 def generate_test_data_for_window3():
     # final_parse_filtered = [final_parse[0], final_parse[1], final_parse[2]]
