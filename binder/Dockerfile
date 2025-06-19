@@ -2,7 +2,18 @@ FROM intel4coro/base-notebook:20.04-noetic-vnc
 
 #FROM ollama/ollama:latest
 RUN curl -L https://ollama.com/download/ollama-linux-amd64.tgz -o ollama-linux-amd64.tgz && \
-    sudo tar -C /usr -xzf ollama-linux-amd64.tgz \
+    tar -C /usr -xzf ollama-linux-amd64.tgz && \
+    rm ollama-linux-amd64.tgz
+
+# Create ollama user and set permissions
+RUN useradd -r -s /bin/false -m -d /usr/share/ollama ollama
+
+# Create necessary directories
+RUN mkdir -p /usr/share/ollama && \
+    chown ollama:ollama /usr/share/ollama
+
+# Switch to ollama user for model download (optional - see note below)
+USER ollama
 
 # Pre-pull models during image build
 RUN ollama serve & \
@@ -17,7 +28,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
     DEBIAN_FRONTEND=noninteractive \
-    TZ=UTC
+    TZ=UTC \
+    OLLAMA_HOST=0.0.0.0:11434
 
 # # Set working directory
 # WORKDIR /app
