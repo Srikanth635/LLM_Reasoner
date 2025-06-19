@@ -26,6 +26,4 @@ trap cleanup EXIT
 # This makes 'ollama serve' the main process of the container.
 # The container will stay alive as long as 'ollama serve' is running.
 echo "Starting Ollama service in the background..."
-ollama serve &
-
-wait -n
+ollama serve

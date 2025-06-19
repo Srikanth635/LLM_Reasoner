@@ -67,7 +67,7 @@ RUN conda create -n agentic_ai311 python=3.11 -y && \
 # Set working directory
 WORKDIR /home/${NB_USER}
 
-#USER ${NB_USER}
+USER ${NB_USER}
 
 COPY --chown=${NB_USER}:users . ./LLM_Reasoner
 
@@ -79,6 +79,8 @@ RUN python -m ipykernel install --user --name "agentic_ai311" --display-name "Py
 
 COPY --chown=${NB_USER}:users start_services.sh /home/${NB_USER}/LLM_Reasoner
 RUN chmod +x /home/${NB_USER}/LLM_Reasoner/start_services.sh
+
+USER root
 
 # Set working directory
 WORKDIR /home/${NB_USER}/LLM_Reasoner
