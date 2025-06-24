@@ -1,0 +1,332 @@
+[
+  {
+    "phase": "Approach",
+    "preconditions": {
+      "robot_state": "ready",
+      "object_location_known": true,
+      "path_to_object_clear": true
+    },
+    "force_dynamics": {
+      "contact": false,
+      "motion_type": "linear_reach",
+      "force_exerted": "none"
+    },
+    "goal_state": {
+      "end_effector_near_object": true,
+      "collision_free_motion_achieved": true
+    },
+    "expected_sensory_cues": {
+      "visual_target_fixation": true,
+      "joint_position_feedback": "within_threshold"
+    },
+    "failure_conditions": [
+      "path_obstructed",
+      "object_location_unknown"
+    ],
+    "recovery_strategies": [
+      "recompute_path",
+      "reacquire_target_location"
+    ],
+    "temporal_constraints": {
+      "max_duration_sec": 3,
+      "urgency": "low"
+    }
+  },
+  {
+    "phase": "Grasp",
+    "preconditions": {
+      "within_grasp_range": true,
+      "object_stationary": true,
+      "gripper_open": true,
+      "grasp_pose_known": true
+    },
+    "force_dynamics": {
+      "contact": true,
+      "motion_type": "gripper_closure",
+      "force_exerted": "moderate_compression"
+    },
+    "goal_state": {
+      "object_grasped": true,
+      "grip_stable": true
+    },
+    "expected_sensory_cues": {
+      "tactile_contact_detected": true,
+      "grip_force_feedback": "stable_range"
+    },
+    "failure_conditions": [
+      "grip_slip",
+      "object_missed"
+    ],
+    "recovery_strategies": [
+      "retry_grasp",
+      "adjust_gripper_pose"
+    ],
+    "temporal_constraints": {
+      "max_duration_sec": 2,
+      "urgency": "medium"
+    }
+  },
+  {
+    "phase": "Lift",
+    "preconditions": {
+      "object_grasped": true,
+      "arm_vertical_clearance": true,
+      "no_obstacle_above": true
+    },
+    "force_dynamics": {
+      "contact": true,
+      "motion_type": "vertical_translation",
+      "force_exerted": "upward_against_gravity"
+    },
+    "goal_state": {
+      "object_lifted": true,
+      "height_threshold_reached": true
+    },
+    "expected_sensory_cues": {
+      "load_sensor_increased": true,
+      "elevation_change": "positive"
+    },
+    "failure_conditions": [
+      "object_not_lifted",
+      "grip_loss"
+    ],
+    "recovery_strategies": [
+      "regrasp_and_retry",
+      "lower_and_reset"
+    ],
+    "temporal_constraints": {
+      "max_duration_sec": 2,
+      "urgency": "medium"
+    }
+  },
+  {
+    "phase": "Transport",
+    "preconditions": {
+      "object_held_securely": true,
+      "target_location_known": true,
+      "target_reachable": true,
+      "collision_free_path_to_target": true
+    },
+    "force_dynamics": {
+      "contact": true,
+      "motion_type": "smooth_translation",
+      "force_exerted": "grip_maintenance_force"
+    },
+    "goal_state": {
+      "object_at_target_position": true,
+      "no_collision_occurred": true
+    },
+    "expected_sensory_cues": {
+      "position_tracking_nominal": true,
+      "vibration_feedback": "low"
+    },
+    "failure_conditions": [
+      "collision_detected",
+      "instability_detected"
+    ],
+    "recovery_strategies": [
+      "pause_and_stabilize",
+      "recalculate_trajectory"
+    ],
+    "temporal_constraints": {
+      "max_duration_sec": 4,
+      "urgency": "low"
+    }
+  },
+  {
+    "phase": "Align",
+    "preconditions": {
+      "at_target_location": true,
+      "relative_pose_computed": true,
+      "pouring_angle_computable": true,
+      "tilt_capability": true
+    },
+    "force_dynamics": {
+      "contact": true,
+      "motion_type": "rotational_adjustment",
+      "force_exerted": "minimal_wrist_torque"
+    },
+    "goal_state": {
+      "object_aligned_for_pour": true,
+      "orientation_within_tolerance": true
+    },
+    "expected_sensory_cues": {
+      "orientation_sensor_alignment": true,
+      "visual_alignment_confirmed": true
+    },
+    "failure_conditions": [
+      "misalignment_exceeds_tolerance"
+    ],
+    "recovery_strategies": [
+      "recompute_alignment_pose",
+      "fallback_to_predefined_angle"
+    ],
+    "temporal_constraints": {
+      "max_duration_sec": 2,
+      "urgency": "high"
+    }
+  },
+  {
+    "phase": "Pour",
+    "preconditions": {
+      "aligned_with_target": true,
+      "pouring_actuator_ready": true,
+      "mug_open_and_stable": true
+    },
+    "force_dynamics": {
+      "contact": true,
+      "motion_type": "controlled_tilt",
+      "force_exerted": "gravity_assisted_fluid_flow"
+    },
+    "goal_state": {
+      "fluid_flow_initiated": true,
+      "target_receiving_fluid": true
+    },
+    "expected_sensory_cues": {
+      "fluid_sensor_activation": true,
+      "audio_feedback_detected": "pouring_sound"
+    },
+    "failure_conditions": [
+      "no_fluid_flow",
+      "spillage_detected"
+    ],
+    "recovery_strategies": [
+      "adjust_pour_angle",
+      "reduce_flow_rate"
+    ],
+    "temporal_constraints": {
+      "max_duration_sec": 5,
+      "urgency": "high"
+    }
+  },
+  {
+    "phase": "Reorient",
+    "preconditions": {
+      "pouring_complete": true,
+      "upright_control_available": true
+    },
+    "force_dynamics": {
+      "contact": true,
+      "motion_type": "reverse_tilt",
+      "force_exerted": "counter_gravity_torque"
+    },
+    "goal_state": {
+      "object_upright": true,
+      "spillage_prevented": true
+    },
+    "expected_sensory_cues": {
+      "tilt_angle_reduction": true,
+      "fluid_flow_stopped": true
+    },
+    "failure_conditions": [
+      "object_unbalanced",
+      "tilt_failed"
+    ],
+    "recovery_strategies": [
+      "attempt_relevel",
+      "reset_grip_pose"
+    ],
+    "temporal_constraints": {
+      "max_duration_sec": 2,
+      "urgency": "medium"
+    }
+  },
+  {
+    "phase": "Return",
+    "preconditions": {
+      "object_upright": true,
+      "return_path_clear": true
+    },
+    "force_dynamics": {
+      "contact": true,
+      "motion_type": "linear_translation",
+      "force_exerted": "stable_carrying_force"
+    },
+    "goal_state": {
+      "object_back_at_resting_position": true,
+      "return_trajectory_completed": true
+    },
+    "expected_sensory_cues": {
+      "target_pose_match": true,
+      "motion_stability": "high"
+    },
+    "failure_conditions": [
+      "path_invalid",
+      "destination_unknown"
+    ],
+    "recovery_strategies": [
+      "reroute_path",
+      "select_alternate_resting_location"
+    ],
+    "temporal_constraints": {
+      "max_duration_sec": 4,
+      "urgency": "low"
+    }
+  },
+  {
+    "phase": "Release",
+    "preconditions": {
+      "object_on_surface": true,
+      "gripper_holding_object": true,
+      "safe_to_release": true
+    },
+    "force_dynamics": {
+      "contact": true,
+      "motion_type": "gripper_opening",
+      "force_exerted": "release_pressure"
+    },
+    "goal_state": {
+      "gripper_opened": true,
+      "object_released_safely": true
+    },
+    "expected_sensory_cues": {
+      "grip_force_zero": true,
+      "tactile_contact_lost": true
+    },
+    "failure_conditions": [
+      "object_dropped",
+      "gripper_failure"
+    ],
+    "recovery_strategies": [
+      "retry_release",
+      "recheck_gripper_status"
+    ],
+    "temporal_constraints": {
+      "max_duration_sec": 2,
+      "urgency": "medium"
+    }
+  },
+  {
+    "phase": "Withdraw",
+    "preconditions": {
+      "object_released": true,
+      "retreat_path_clear": true,
+      "home_pose_known": true
+    },
+    "force_dynamics": {
+      "contact": false,
+      "motion_type": "arm_retraction",
+      "force_exerted": "none"
+    },
+    "goal_state": {
+      "arm_retracted": true,
+      "return_to_idle": true
+    },
+    "expected_sensory_cues": {
+      "arm_pose_home": true,
+      "no_contact_feedback": true
+    },
+    "failure_conditions": [
+      "obstruction_detected",
+      "motion_blocked"
+    ],
+    "recovery_strategies": [
+      "find_clear_retreat_path",
+      "move_to_safe_pose"
+    ],
+    "temporal_constraints": {
+      "max_duration_sec": 3,
+      "urgency": "low"
+    }
+  }
+]

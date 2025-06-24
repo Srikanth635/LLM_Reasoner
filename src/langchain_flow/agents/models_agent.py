@@ -1,6 +1,7 @@
 from langgraph.checkpoint.memory import MemorySaver
 from src.langchain_flow.agents.framenet_agent import framenet_node_pal_custom
 from src.langchain_flow.agents.flanagan_agent import flanagan_node
+from src.langchain_flow.agents.new_flanagan_workflow import new_flanagan_node
 from src.langchain_flow.agents.enhanced_ad_agent import *
 from src.langchain_flow.state_graph import *
 
@@ -19,7 +20,7 @@ def aggregator_node(state: MessagesState):
 model_builder = StateGraph(ModelsStateInternal)
 
 model_builder.add_node("framenet_reasoner", framenet_node_pal_custom)
-model_builder.add_node("flanagan_reasoner",flanagan_node)
+model_builder.add_node("flanagan_reasoner",new_flanagan_node)
 model_builder.add_node("aggregator", aggregator_node)
 
 model_builder.add_edge(START, "framenet_reasoner")
@@ -46,12 +47,12 @@ def models_node(state: StateModel):
                         'cram_plan_response' : cram_plan_response})
 
     framenet_model = final_models_state['framenet_model']
-    premotion_phase = final_models_state['premotion_phase']
-    phaser = final_models_state['phaser']
+    # premotion_phase = final_models_state['premotion_phase']
+    # phaser = final_models_state['phaser']
     flanagan = final_models_state['flanagan']
 
 
-    return {'framenet_model' : framenet_model, 'premotion_phase' : premotion_phase, 'phaser' : phaser, 'flanagan' : flanagan}
+    return {'framenet_model' : framenet_model, 'premotion_phase' : "premotion_phase", 'phaser' : "phaser", 'flanagan' : flanagan}
 
 if __name__ == "__main__":
     print()
