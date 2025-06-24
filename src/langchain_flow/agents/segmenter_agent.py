@@ -49,8 +49,8 @@ TaskObjectiveAgent_prompt_template = """
     You are given a list of sequential descriptions from a segmented video, each describing a person's actions in a scene. Your job is to
     infer the high-level task or objective the person is trying to complete across the entire sequence.
     
-    Consider the overall progression of objects used, goals achieved, and final outcomes. Think beyond superficial actions and
-    identify the deeper intent of the task.
+    To do this, first consider the sequence of actions as a whole. Pay attention to the initial state of the objects, how they are transformed
+    or combined, and the final state of the scene. Think beyond the individual actions to identify the deeper intent.
     
     Respond with one concise sentence that clearly expresses the overall objective of the task.
     
@@ -66,8 +66,9 @@ ActivityExtractionAgent_prompt_template = """
     - A high-level task objective
     - A single segment of description
     
-    Your job is to identify the **atomic action(s)** performed in this segment, as well as all related **entities** and **roles**. If multiple
-    distinct actions are performed in one segment, output each one as a separate entry.
+    Your job is to identify the **atomic action(s)** performed in this segment, as well as all related **entities** and **roles**. Use the
+    provided **high-level task objective** to help disambiguate the intent of an action if the description is vague. If multiple distinct
+    actions are performed in one segment, output each one as a separate entry.
     
     ** IMPORTANT CONSIDERATION **
     You must restrict the "intent" field to one of the following allowed robot action classes:
@@ -105,7 +106,9 @@ RedundancyFilterAgent_prompt_template = """
     You are a function that receives a JSON array of structured robot actions and returns a cleaned version of that list.
     
     Rules:
-    - Remove duplicate or overlapping actions.
+    - Remove actions that are functionally identical and consecutive. An action is a duplicate if it has the same "intent" and "object"
+        as the one immediately preceding it. If two consecutive actions are identical but one contains more detail (e.g., a "location" field),
+        keep only the more detailed one.
     - Merge fine-grained variations of the same action (e.g., "adjust", "realign").
     - Do NOT invent or describe actions.
     - Do NOT include commentary, explanation, notes, formatting, or headings.
@@ -128,7 +131,9 @@ InstructionGeneratorAgent_prompt_template = """
     1. The robot has only **one working arm**.
     2. If the robot **picks up** or **holds** an object, it must **place** or **release** that object before picking up another.
     3. Do not generate commands that involve holding multiple objects at the same time.
-    4. If the robot needs to switch from one object to another, insert an intermediate instruction (e.g., “Place the current object on the counter”) **before** the next action.
+    4. **Crucial Rule:** Before generating an instruction for a "pick up" or "take" action, you must check the preceding context. If the robot is
+        already holding an item, you **MUST** first generate a command to "Place" the current item on a stable surface (e.g., "Place the bottle on the counter.")
+        before generating the new "pick up" command.
     5. Track whether the robot is currently holding an object (you will be informed of this, or you can infer it based on recent instructions).
     6. Maintain physical realism and logical object handoff.
     
@@ -172,10 +177,11 @@ You are a task optimizer and robot reasoning assistant.
 You are given a list of robot instructions written in natural language. These commands describe physical actions for a robot with one arm to perform.
 
 Your task is to:
-- Reorder the steps if needed to match a logical and physically feasible sequence.
-- Remove redundant, duplicate, or conflicting actions.
-- Ensure that object manipulations respect physical constraints (e.g., the robot must release an object before picking up another).
-- Improve command phrasing for clarity, precision, and direct robot execution.
+- Review the sequence for physical and logical feasibility. **Your primary goal is to ensure physical feasibility. Do NOT reorder steps unless the original
+    sequence is physically impossible or illogical** (e.g., a 'cut' command comes before 'pick up knife'). When no reordering is necessary, preserve the original sequence.
+- Remove any remaining redundant or conflicting actions.
+- Perform a final check to ensure all physical constraints are met (e.g., the robot must place an object before picking up another).
+- Refine command phrasing for clarity and conciseness.
 - Only use action phrases from this allowed action set:
 
 [peel, cut, pick up, lift, open, operate tap, pipette, pour, press, pull, place, remove, roll, shake, spoon, sprinkle, stir, take, turn, unscrew, wait]

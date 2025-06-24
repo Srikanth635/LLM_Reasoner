@@ -520,7 +520,79 @@ flanagan_premotion_prompt_template = """
     Original Instruction: {instruction}
     
 """
-flanagan_premotion_prompt = ChatPromptTemplate.from_template(flanagan_premotion_prompt_template)
+
+flanagan_prompt_template_new = """
+    You are a specialized AI agent, an expert in Robotic Task Initialization. Your sole purpose is to take semi-structured 
+    data about a robotic task and transform it into the complete pre_motion_phase of a Flanagan-like task model. 
+    You are a data-to-schema transformer.
+
+    *Your Mission:*
+    
+    You will receive contextual information about a task. Your job is to use this information to generate a single, valid 
+    JSON object with one top-level key: pre_motion_phase. This object must contain three sub-sections: goal_definition, predictive_model, and motion_planning.
+    
+    *Input Inputs You Will Receive:*
+    
+    - Enriched Attributes JSON: A JSON object containing the action's attributes and their enriched _props dictionaries. This is your primary source of truth.
+    - Action Core: The primary classified action (e.g., "Cutting", "Pouring").
+    - Original Instruction: The initial high-level user command. Use this for high-level context only if other inputs are ambiguous; do not extract new entities from it.
+    
+    ### Mapping and Generation Instructions ###
+    You must meticulously follow these rules to construct the JSON output.
+    
+    1. Constructing goal_definition:
+        This section defines the "what" of the task.
+    
+        - task (string): Create a concise task summary. Combine the Action Core with the primary object's name (e.g., "Cutting apple", "Pouring water").
+        - semantic_annotation (string): Use the Action Core input to create a TaskClass annotation. (e.g., if Action Core is "Cutting", this should be "TaskClass:Manipulation.Cutting").
+        - object, target, tool (ObjectModel/ToolModel):
+            - **Role Mapping Rule:** Identify the roles (`object`, `target`, `tool`) by applying the following heuristic to the keys in the Enriched Attributes JSON:
+                - `object`: The primary entity being acted upon. Key often contains "obj", "object", or "item" (e.g., `obj_to_be_cut`).
+                - `target`: The destination or goal location/state. Key often contains "goal", "target", or "destination" (e.g., `target_surface`).
+                - `tool`: The instrument used for the action. Key often contains "tool", "utensil", or "implement" (e.g., `utensil`).
+            - For each identified role, create a JSON object with the following structure:
+                - id (string): Generate a descriptive, lowercase ID from the object's name, always appending a suffix like "_01" for objects/targets and "_main" for tools (e.g., "apple" becomes "apple_01", "knife" 
+                becomes "knife_main").
+                - type (string): Use "PhysicalArtifact" for objects/targets and "Tool" for tools, unless otherwise specified.
+                - properties (object): Directly map the corresponding _props dictionary from the input JSON here.
+                - expected_end_state (object): (For `object` and `target` only). Define a logical end state based on the Action Core. The condition key should be of the form "is_<past_participle_of_action>". 
+                For example:
+                    - "Cutting" -> `"conditions": {{ "is_cut": true }}`
+                    - "Pouring" -> `"conditions": {{ "is_empty": true }}` (for the source object)
+                    - "Wiping"  -> `"conditions": {{ "is_clean": true }}`
+                    - "Placing" -> `"conditions": {{ "is_in_position": true }}`
+            - Null Handling: If a target or tool is not present in the input data, omit its key entirely from the goal_definition.
+            
+    2. Constructing predictive_model and motion_planning:
+        These sections define the "how." Generate context-aware defaults based on the Action Core.
+        
+        - predictive_model:
+            - expected_trajectory: Create a descriptive string by combining the Action Core with a generic path, e.g., "Standard{{ActionCore}}Trajectory" (e.g., "StandardCuttingTrajectory").
+            - expected_force: Provide reasonable default float values, e.g.,  `"initial_N": 1.5`, `"resistance_range_N": [1.0, 2.0]`.
+            - confidence_level: Use a high default of 0.95.
+            - affordance_model: **Derive boolean affordances from the Action Core.** The keys should combine the role and the action. For example, for a "Cutting" task with a tool and an object:
+                `"tool_affords_cutting": true, "object_affords_being_cut": true`
+        - motion_planning:
+            - planned_trajectory: Use a context-aware default like "DirectPathTo{{Object}}" or "Coordinated{{ActionCore}}Path".
+            - obstacle_avoidance: Use a default like "ReactiveSensorBased".
+            - energy_efficiency: Use a default like "Balanced".
+        
+    ### Output Specification ###
+    - Your response MUST be a single, valid JSON object.
+    - The only top-level key must be pre_motion_phase.
+    - Do not include any other keys, text, explanations, or markdown formatting.
+    
+    ---
+    
+    Now perform the task for given action, enriched_attributes and instruction:
+    
+    Action Core: {action_core}
+    Enriched Attributes: {enriched_attributes}
+    Original Instruction: {instruction}
+"""
+
+# flanagan_premotion_prompt = ChatPromptTemplate.from_template(flanagan_premotion_prompt_template)
+flanagan_premotion_prompt = ChatPromptTemplate.from_template(flanagan_prompt_template_new)
 
 flanagan_phaser_prompt_template = """
     You are an expert AI in Robotic Motion Phase Decomposition. Your sole purpose is to generate the sequential motion phases of a
@@ -684,7 +756,163 @@ flanagan_phaser_prompt_template = """
     Original Instruction: {instruction}
     
 """
-flanagan_phaser_prompt = ChatPromptTemplate.from_template(flanagan_phaser_prompt_template)
+flanagan_phaser_prompt_template_new = """
+    You are an expert AI in Robotic Motion Phase Decomposition. Your sole purpose is to generate the sequential motion phases of a
+    robotic task (Initiation through PostMotion) by decomposing a task's goal into a logical series of steps, based on a wealth of provided context. You are a precise, schema-adhering JSON generator.
+
+    *Your Mission:*
+
+    You will receive a comprehensive set of inputs that define a task's goal and low-level structure. Your job is to use this information
+    to reason about the physical steps required to perform the action and to output a single, valid JSON object that strictly adheres to the specified schema, including a top-level task name and the
+    five sequential motion phases.
+
+    ### Inputs You Will Receive: ###
+
+    - Pre-Motion Phase JSON: The detailed definition of the task's goal, including the specific ids and properties of the object, target, and tool.
+    - CRAM Plan: A low-level symbolic plan that provides a strong hint about the fundamental sequence of actions.
+    - Action Core: The primary classified action (e.g., "Cutting", "Placing").
+    - Original Instruction: The initial high-level user command, for overall context.
+
+    ### Core Logic and Generation Instructions ###
+
+    **1. Generate the Top-Level Task Key:**
+    - The root of your output JSON object MUST have a "task" key.
+    - The value of "task" should be a concise, PascalCase label for the entire operation. Derive this from the Action Core and the primary object. Example: "Cutting" action with "apple_01" object becomes "CutApple".
+
+    **2. Use the CRAM Plan as a Scaffold:**
+    - The CRAM Plan provides the blueprint for your SubPhases. Analyze its action types (e.g., `(type grab-object)`, `(type lift-object)`) to define the sequence of your SubPhases within the appropriate
+    main phases. Map the CRAM actions to logical SubPhase names (e.g., `grab-object` -> `GraspTool`).
+
+    **3. Reference Pre-Motion Data for IDs:**
+    - Constantly refer to the `Pre-Motion Phase JSON` to get the correct `id` for the `object`, `tool`, and `target` (e.g., "apple_01", "knife_main"). These IDs are mandatory for creating meaningful
+    `goalState` conditions.
+
+    **4. Adhere to the Five-Phase Structure:**
+    - Structure your decomposition into exactly five phases in this order: `initiation_phase`, `execution_phase`, `interaction_phase`, `termination_phase`, `post_motion_phase`.
+    - A typical flow is:
+        - `initiation_phase`: Acquiring the necessary tool or object (e.g., Reach, Grasp).
+        - `execution_phase`: Moving the held item to the interaction point (e.g., Lift, Transport, Align).
+        - `interaction_phase`: The main event where the action is performed (e.g., Cut, Pour, Wipe).
+        - `termination_phase`: Concluding the interaction and placing objects (e.g., Retract, Place, Release).
+        - `post_motion_phase`: Returning the robot to a neutral state (e.g., ReturnToHome, UpdateWorldModel).
+
+    **5. SubPhase Generation Rules (CRITICAL):**
+    - **Mandatory Presence:** Every main phase (`initiation`, `execution`, etc.) MUST contain a `SubPhases` array. This array MUST NOT be empty.
+    - **Logical Ordering:** The sequence of `SubPhases` within a main phase, and across the entire plan, must be physically logical and sequential.
+    - **Uniqueness:** Each `SubPhase` (e.g., "GraspTool") must be unique across the entire five-phase plan. DO NOT repeat a SubPhase in a different main phase.
+
+    **6. Define `goalState` with a Strict Schema:**
+    - The `goalState` for each SubPhase must define the specific, verifiable condition that marks its completion using the following JSON object structure:
+      `"goalState": {{ "target_id": "<id_from_pre-motion>", "condition": "<state>", "value": <boolean> }}`
+    - For system-level or robot-level states where there is no object `id`, use a descriptive string like "Robot.Arm" or "System.KnowledgeBase".
+
+    ### Output Specification ###
+    - Your response MUST be a single, valid JSON object.
+    - The JSON object must contain the top-level "task" key, followed by the five sequential phase keys.
+    - Do not include any text, explanations, or markdown formatting outside of the JSON structure.
+
+    ### Example ###
+    (Inputs are the same as your original prompt)
+
+    Your Output:
+
+    ```json
+    {{
+      "task": "CutApple",
+      "initiation_phase": {{
+        "name": "Initiation",
+        "SubPhases": [
+          {{
+            "name": "ReachForTool",
+            "description": "Move end-effector towards the knife.",
+            "goalState": {{ "target_id": "knife_main", "condition": "IsInRange", "value": true }}
+          }},
+          {{
+            "name": "GraspTool",
+            "description": "Grasp the knife using the gripper.",
+            "goalState": {{ "target_id": "knife_main", "condition": "IsHeld", "value": true }}
+          }}
+        ],
+        "SymbolicGoals": [{{ "goal": "ToolAcquired" }}],
+        "SemanticAnnotation": "PhaseClass:Initiation"
+      }},
+      "execution_phase": {{
+        "name": "Execution",
+        "SubPhases": [
+          {{
+            "name": "ApproachObjectWithTool",
+            "description": "Move the knife into position above the apple.",
+            "goalState": {{ "target_id": "apple_01", "condition": "IsInRange", "value": true }}
+          }},
+          {{
+            "name": "AlignToolForCut",
+            "description": "Align the knife edge with the apple surface.",
+            "goalState": {{ "target_id": "knife_main", "condition": "IsAligned", "value": true }}
+          }}
+        ],
+        "SymbolicGoals": [{{ "goal": "ReadyToInteract" }}],
+        "SemanticAnnotation": "PhaseClass:Execution"
+      }},
+      "interaction_phase": {{
+        "name": "Interaction",
+        "SubPhases": [
+          {{
+            "name": "PerformCut",
+            "description": "Apply downward force with the knife to slice the apple.",
+            "goalState": {{ "target_id": "apple_01", "condition": "IsCut", "value": true }}
+          }}
+        ],
+        "SymbolicGoals": [{{ "goal": "ObjectStateModified" }}],
+        "SemanticAnnotation": "PhaseClass:Interaction"
+      }},
+      "termination_phase": {{
+        "name": "Termination",
+        "SubPhases": [
+          {{
+            "name": "RetractTool",
+            "description": "Lift the knife away from the cut apple.",
+            "goalState": {{ "target_id": "knife_main", "condition": "IsClearOfObject", "value": true }}
+          }},
+          {{
+            "name": "ReleaseTool",
+            "description": "Place the knife back in a safe location and release grip.",
+            "goalState": {{ "target_id": "knife_main", "condition": "IsHeld", "value": false }}
+          }}
+        ],
+        "SymbolicGoals": [{{ "goal": "InteractionComplete" }}],
+        "SemanticAnnotation": "PhaseClass:Termination"
+      }},
+      "post_motion_phase": {{
+        "name": "PostMotion",
+        "SubPhases": [
+          {{
+            "name": "ReturnToHome",
+            "description": "Move the end-effector to a neutral home position.",
+            "goalState": {{ "target_id": "Robot.Arm", "condition": "IsAtHome", "value": true }}
+          }},
+          {{
+            "name": "UpdateWorldModel",
+            "description": "Update the knowledge base with the new state of the apple.",
+            "goalState": {{ "target_id": "System.KnowledgeBase", "condition": "IsUpdated", "value": true }}
+          }}
+        ],
+        "SymbolicGoals": [{{ "goal": "TaskComplete" }}],
+        "SemanticAnnotation": "PhaseClass:PostMotion"
+      }}
+    }}
+    ```
+    ---
+
+    Now, perform the task for the given premotion_phase info, CRAM plan, action core and instruction:
+
+    Pre-Motion Phase JSON: {premotion_phase}
+    CRAM Plan: {cram_plan}
+    Action Core: {action_core}
+    Original Instruction: {instruction}
+"""
+
+# flanagan_phaser_prompt = ChatPromptTemplate.from_template(flanagan_phaser_prompt_template)
+flanagan_phaser_prompt = ChatPromptTemplate.from_template(flanagan_phaser_prompt_template_new)
 
 flanagan_combiner_prompt_template = """
     You are a simple, hyper-focused JSON Manipulation Utility. Your only function is to combine two separate JSON objects into a single,
@@ -823,12 +1051,31 @@ def flanagan_repr(state : FlanaganStateInternal):
     print(response3)
     return {'flanagan' : response3.model_dump_json(indent=2)}
 
+def flanagan_combiner(state : FlanaganStateInternal):
+    pre_motion_json_str = state['premotion_phase']
+    phaser_json_str = state['phaser']
+
+    pre_motion_object = FullPhase.model_validate_json(pre_motion_json_str)
+    phaser_object = TaskModel.model_validate_json(phaser_json_str)
+
+    phaser_dict = phaser_object.model_dump()
+
+    combined_data = {
+        **phaser_dict,  # Unpack all key-value pairs from the phaser output
+        "pre_motion_phase": pre_motion_object  # Add the parsed pre_motion_phase object
+    }
+
+    final_object = FinalModel(**combined_data)
+
+    return {'flanagan' : final_object.model_dump_json(indent=2)}
+
+
 flanagan_memory = MemorySaver()
 
 fbuilder = StateGraph(FlanaganStateInternal)
 fbuilder.add_node("flanagan_premotion", flanagan_premotion_node)
 fbuilder.add_node("flanagan_phaser", flanagan_phaser_node)
-fbuilder.add_node("flanagan_repr", flanagan_repr)
+fbuilder.add_node("flanagan_repr", flanagan_combiner)
 fbuilder.set_entry_point("flanagan_premotion")
 
 fbuilder.add_edge("flanagan_premotion", "flanagan_phaser")

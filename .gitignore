@@ -4,3 +4,5 @@
 *.pyc
 .langgraph_api/
 **/.langgraph_api/
+credentials.json
+service_account.json

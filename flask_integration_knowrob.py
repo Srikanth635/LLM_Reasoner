@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from src.langchain_flow.agents.models_agent import *
 from src.langchain_flow.agents.old_agents.reasoner_agent import *
+from src.langchain_flow.agents.enhanced_ad_agent import *
 import requests
 
 app = Flask(__name__)
@@ -24,12 +25,12 @@ def generate_designator():
 
         # Model Invocation
         _config = {"configurable": {"thread_id": 1}}
-        final_graph_state = pal_graph.invoke({"instruction": _instruction}, config=_config, stream_mode="updates")
+        final_graph_state = enhanced_ad_graph.invoke({"instruction": _instruction}, config=_config, stream_mode="updates")
 
         instruction = _instruction
-        action_core = pal_graph.get_state(_config).values["action_core"]
-        enriched_action_core_attributes = pal_graph.get_state(_config).values["enriched_action_core_attributes"]
-        cram_plan_response = pal_graph.get_state(_config).values["cram_plan_response"]
+        action_core = enhanced_ad_graph.get_state(_config).values["action_core"]
+        enriched_action_core_attributes = enhanced_ad_graph.get_state(_config).values["enriched_action_core_attributes"]
+        cram_plan_response = enhanced_ad_graph.get_state(_config).values["cram_plan_response"]
 
         new_out = {}
         try:

@@ -177,7 +177,7 @@ def generate_test_data_for_window3():
         # instruction = fp['instruction']
         # ad = fp['action_designator']
         print("Invoking Model")
-        out = ad_graph.invoke({'instruction': fp, 'context': ""})
+        out = enhanced_ad_graph.invoke({'instruction': fp, 'context': ""})
         global graph_output
         graph_output.append(out)
 
@@ -205,7 +205,7 @@ def generate_test_data_for_window4():
     config = {"configurable" : {"thread_id" : 1}}
     framenet_model = ""
     flanagan = ""
-    for out in graph_output[:1]:
+    for out in graph_output:
         print("<UNK> Sending test data to 4th window...")
         instruction = out['instruction']
         action_core = out['action_core']
