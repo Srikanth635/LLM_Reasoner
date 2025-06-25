@@ -12,8 +12,8 @@ segments = ""
 context = ""
 final_parse = ""
 
-# with open("./feroz_context.txt", 'r') as f:
-with open("./CRAM_Plan_Executive.txt", 'r') as f:
+# with open("cutting_context.txt", 'r') as f:
+with open("./pouring_context.txt", 'r') as f:
     context = f.read()
 
 

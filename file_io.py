@@ -116,11 +116,11 @@ def download_file_from_folder(FILE_NAME_TO_DOWNLOAD : str, LOCAL_DOWNLOAD_PATH :
 
 if __name__ == '__main__':
 
-    # file_to_upload = "templates/pouring_cram.html"
+    file_to_upload = "templates/pouring_cram_updated.html"
+
+    upload_with_overwrite(file_to_upload)
     #
-    # upload_with_overwrite(file_to_upload)
-
-
-    file_name_to_download = "pouring_cram.html"
-    local_download_path = "pouring_static.html"
-    download_file_from_folder(file_name_to_download, local_download_path)
+    #
+    # file_name_to_download = "pouring_cram_updated.html"
+    # local_download_path = "pouring_static.html"
+    # download_file_from_folder(file_name_to_download, local_download_path)

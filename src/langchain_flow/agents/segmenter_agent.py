@@ -40,7 +40,7 @@ class StructuredActivity(BaseModel):
     duration: Optional[str] = None
 
 class OrderedInstructions(BaseModel):
-    instructions: List[str] = Field(description="List of Robot Actionable sequence of instructions in Natural language")
+    instructions: List[str] = Field(description="List of Robot Actionable instructions in natural language imperative form.")
 
 
 TaskObjectiveAgent_prompt_template = """
@@ -60,25 +60,25 @@ TaskObjectiveAgent_prompt_template = """
 """
 
 ActivityExtractionAgent_prompt_template = """
-    You are an assistant that extracts structured activity information from natural language video segment descriptions.
+    You are a precise and methodical assistant that extracts structured activity information from natural language. Your goal is to be accurate and concise.
 
     You will be given:
     - A high-level task objective
     - A single segment of description
-    
+
     Your job is to identify the **atomic action(s)** performed in this segment, as well as all related **entities** and **roles**. Use the
     provided **high-level task objective** to help disambiguate the intent of an action if the description is vague. If multiple distinct
     actions are performed in one segment, output each one as a separate entry.
-    
+
     ** IMPORTANT CONSIDERATION **
     You must restrict the "intent" field to one of the following allowed robot action classes:
 
     [peel, cut, pick up, lift, open, operate tap, pipette, pour, press, pull, place, remove, roll, shake, spoon, sprinkle, stir, take, turn, unscrew, wait]
-    
+
     Only use these verbs in the "intent" field. Do not invent new actions. If an action doesn't fit, select the closest appropriate one.
-    
+
     Return the result as a JSON array of structured activity objects. Use the format:
-    
+
     ```json
     [
       {
@@ -92,14 +92,13 @@ ActivityExtractionAgent_prompt_template = """
         "duration": "<optional duration e.g., 10 seconds, 5 minutes>"
       }
     ]
-    
+
     Include all objects, tools, modifiers, or locations mentioned. If a field is not applicable, omit it.
 
     Be accurate, extract only what is clearly described, and do not make assumptions.
-    Respond with a valid JSON array of structured actions .
-    
-    ---
+    Respond with a valid JSON array of structured actions.
 
+    ---
 """
 
 RedundancyFilterAgent_prompt_template = """
@@ -171,7 +170,85 @@ InstructionGeneratorAgent_prompt_template = """
     /nothink
 """
 
+StatefulInstructionPlannerAgent_prompt_template = """
+    You are an expert robot motion planner for a one-armed robot assistant.
+
+    You will be given a JSON array of sequential actions extracted from a video. Your task is to convert this entire sequence into a physically realistic, efficient, and
+    logical list of natural language instructions.
+
+    You must follow these rules meticulously:
+
+    1.  **Process the ENTIRE list of actions**: Do not process each action in isolation. Consider the full sequence to understand the context.
+    2.  **State Tracking (One-Arm Constraint)**: The robot has only one arm.
+        -   Maintain an internal state of what the robot is currently holding. Let's call this `held_item`. Initially, `held_item` is `null`.
+        -   When you encounter a "pick up" or "take" action, set `held_item` to that object.
+        -   If you encounter a "pick up" or "take" action when `held_item` is NOT `null`, you **MUST** first generate a "Place [current held_item] on the counter" instruction
+            before generating the new "pick up" instruction.
+        -   After a "place", "pour", "sprinkle", or "spoon" action where the tool is released, update `held_item` to `null`.
+    3.  **Redundancy Elimination**:
+        -   Examine the incoming actions for redundancy. If you see multiple, slightly different actions that achieve the same goal (e.g., "lift cup", "pick up cup"), merge them
+            into a single, clear instruction.
+        -   Remove any action that is a minor, unnecessary part of another action (e.g., ignore "move hand towards knife" if it's followed by "pick up knife").
+    4.  **Instruction Generation**:
+        -   Generate one clear, concise instruction per line from the allowed action list.
+        -   Use a polite, imperative tone (e.g., "Pick up the knife," "Pour the water...").
+        -   Only use verbs from this list for the core action: `[peel, cut, pick up, lift, open, operate tap, pipette, pour, press, pull, place, remove, roll, shake, spoon,
+            sprinkle, stir, take, turn, unscrew, wait]`
+
+    **Example Walkthrough:**
+    Input JSON array:
+    ```json
+    [
+      {{ "intent": "lift", "object": "bottle" }},
+      {{ "intent": "pick up", "object": "bottle" }},
+      {{ "intent": "unscrew", "object": "cap", "tool": "bottle" }},
+      {{ "intent": "pick up", "object": "glass" }}
+    ]
+    ```
+
+    **Your internal thought process should be:**
+    1.  `held_item` is `null`.
+    2.  Action 1 ("lift bottle") and 2 ("pick up bottle") are redundant. I will merge them into one: "Pick up the bottle."
+    3.  After this, `held_item` is "bottle".
+    4.  Action 3 ("unscrew cap") uses the bottle. The robot is holding it. This is valid. Instruction: "Unscrew the cap from the bottle." `held_item` is still "bottle".
+    5.  Action 4 is "pick up glass". But `held_item` is "bottle". I MUST place the bottle first.
+    6.  So, I will insert an instruction: "Place the bottle on the counter."
+    7.  Now, `held_item` is `null`.
+    8.  I can now process the "pick up glass" action. Instruction: "Pick up the glass."
+    9.  Final `held_item` is "glass".
+
+    **Final Output for Example:**
+    Pick up the bottle.
+    Unscrew the cap from the bottle.
+    Place the bottle on the counter.
+    Pick up the glass.
+    
+    
+    NOTE: Return only the final instruction(s) in natural language. Do not add any commentary, feedback or explanation around them. The output should be just the instructions.
+    ---
+    Now, process the following JSON array and provide the final list of instructions. Return ONLY the instructions, one per line.
+
+"""
+
 InstructionRefinementAgent_prompt_template = """
+    You are a meticulous quality assurance assistant for robot task plans.
+    
+    You will be given a pre-generated list of natural language instructions for a one-armed robot. The list should already be mostly correct and logically ordered.
+    
+    Your task is to perform a final review with these priorities:
+    
+    1.  **Strictly Verify Physical Constraints**: Read through the instructions one last time, ensuring there are no violations of the one-armed robot rule. For every "pick up", confirm that the robot's hand was free. This is your most important task.
+    2.  **Check for Logical Flow**: Ensure the overall plan makes sense. For instance, an object should be opened before its contents are poured. Do not reorder steps unless there is a clear logical contradiction.
+    3.  **Improve Clarity and Conciseness**: Rephrase any awkward or ambiguous commands. Ensure every command uses an action verb from the approved list: `[peel, cut, pick up, lift, open, operate tap, pipette, pour, press, pull, place, remove, roll, shake, spoon, sprinkle, stir, take, turn, unscrew, wait]`
+    
+    ### EXPECTED OUTPUT: ###
+    ** Return only the final, corrected instruction list — one instruction per line in execution order.
+    Do not add commentary, explanation, formatting, or feedback. **
+    
+    /nothink
+"""
+
+InstructionRefinementAgent_prompt_template_old = """
 You are a task optimizer and robot reasoning assistant.
 
 You are given a list of robot instructions written in natural language. These commands describe physical actions for a robot with one arm to perform.
@@ -274,8 +351,6 @@ def redundancy_filter_agent(state : SystemState):
     print("Filtered Activities: " + str(deduped) + "\n")
     return state
 
-import json
-
 def instruction_generator_agent(state : SystemState):
     filtered = state["structured_activities"]
     # Map structured actions to natural language
@@ -288,6 +363,21 @@ def instruction_generator_agent(state : SystemState):
     state["final_instructions"] = instructions
     print("Final Instructions: " + str(instructions) + "\n")
     return state
+
+def instruction_planner(state : SystemState):
+    activities = state["structured_activities"]
+    prompt = (
+            StatefulInstructionPlannerAgent_prompt_template + "\n" +
+            f"Actions:\n{activities}\n\n"
+            "Return a concise list of unique actions required to complete the task."
+    )
+    structured_llm = ollama_llm.with_structured_output(OrderedInstructions, method="json_schema")
+    result = structured_llm.invoke(prompt)
+    # cleaned_result = think_remover(result.content).split("\n")
+    print("Planned instructions : ", result.instructions , type(result.instructions))
+    state['final_instructions'] = result.instructions
+    return state
+
 
 def instruction_refinement_agent(state: SystemState):
     raw_instructions = state["final_instructions"]
@@ -313,16 +403,18 @@ graph = StateGraph(SystemState)
 
 graph.add_node("TaskObjectiveAgent", task_objective_agent)
 graph.add_node("ActivityExtractionAgent", activity_extraction_agent)
-graph.add_node("RedundancyFilterAgent", redundancy_filter_agent)
-graph.add_node("InstructionGeneratorAgent", instruction_generator_agent)
+# graph.add_node("RedundancyFilterAgent", redundancy_filter_agent)
+# graph.add_node("InstructionGeneratorAgent", instruction_generator_agent)
+graph.add_node("InstructionPlannerAgent", instruction_planner)
 graph.add_node("InstructionRefinementAgent", instruction_refinement_agent)
 
 
 graph.set_entry_point("TaskObjectiveAgent")
 graph.add_edge("TaskObjectiveAgent", "ActivityExtractionAgent")
-graph.add_edge("ActivityExtractionAgent", "RedundancyFilterAgent")
-graph.add_edge("RedundancyFilterAgent", "InstructionGeneratorAgent")
-graph.add_edge("InstructionGeneratorAgent", "InstructionRefinementAgent")
+# graph.add_edge("ActivityExtractionAgent", "RedundancyFilterAgent")
+# graph.add_edge("RedundancyFilterAgent", "InstructionGeneratorAgent")
+graph.add_edge("ActivityExtractionAgent", "InstructionPlannerAgent")
+graph.add_edge("InstructionPlannerAgent", "InstructionRefinementAgent")
 graph.add_edge("InstructionRefinementAgent", END)
 
 # Compile
