@@ -274,7 +274,7 @@ def think_remover(res: str):
 #     print("14b model not available, using 8b model")
 #     ollama_llm = ChatOllama(model="qwen3:8b")
 
-# with open("feroz_context.txt", 'r') as f:
+# with open("cutting_context.txt", 'r') as f:
 #     context = f.read()
 #
 #
