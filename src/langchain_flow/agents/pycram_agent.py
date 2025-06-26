@@ -13,6 +13,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.prompts import ChatPromptTemplate
 from typing import Dict, Type, List, Literal, Union, Annotated
 from pydantic import BaseModel, Field
+from src.langchain_flow.state_graph import *
 from langgraph.graph import MessagesState
 from langgraph.types import Command
 from enum import Enum
@@ -24,6 +25,7 @@ answers = {
     "populated_models" : ""
 }
 
+pycram_memory = MemorySaver()
 
 model_selector_prompt_template = """
     You are an intelligent robotic action classifier.
@@ -145,10 +147,12 @@ class ActionNames(BaseModel):
 # class Actions(BaseModel):
 #     models : List[ActionsTypes] = Field(description="list of instantiated action model instances")
 
-action_classes = [PickUpAction, NavigateAction, PlaceAction, SetGripperAction, LookAtAction,
-                  MoveTorsoAction, GripAction, ParkArmsAction, MoveAndPickUpAction, MoveAndPlaceAction,
-                  OpenAction, CloseAction, GraspingAction, ReachToPickUpAction, TransportAction,
-                    SearchAction, FaceAtAction]
+# action_classes = [PickUpAction, NavigateAction, PlaceAction, SetGripperAction, LookAtAction,
+#                   MoveTorsoAction, GripAction, ParkArmsAction, MoveAndPickUpAction, MoveAndPlaceAction,
+#                   OpenAction, CloseAction, GraspingAction, ReachToPickUpAction, TransportAction,
+#                     SearchAction, FaceAtAction]
+
+action_classes = [PickUpAction, PlaceAction, OpenAction]
 
 class Actions(BaseModel):
     models : List[Union[*action_classes]] = Field(description="list of instantiated action model instances")
@@ -163,12 +167,13 @@ model_populator_prompt = ChatPromptTemplate.from_template(model_populator_prompt
 
 structured_ollama_llm_pc1 = ollama_llm.with_structured_output(ActionNames, method="json_schema")
 
-structured_ollama_llm_pc2 = ollama_llm.with_structured_output(Actions, method="json_schema")
+structured_ollama_llm_pc2 = ollama_llm.with_structured_output(PickUpAction, method="json_schema")
 
 
-@tool(description="PyCram Action Designator pydantic model selector tool",
-      return_direct=True,)
-def model_selector(instruction : str):
+# @tool(description="PyCram Action Designator pydantic model selector tool",
+#       return_direct=True,)
+# def model_selector(instruction : str):
+def model_selector(state : PyCramStateInternal):
     """
     PyCram Action Designator model selector tool that selects relevant Pydantic model names
     based on the input robot task instruction.
@@ -177,25 +182,28 @@ def model_selector(instruction : str):
     :return: List of relevant action model class names (as strings).
     """
     print("INSIDE MODEL SELECTOR TOOL")
+    instruction = state['instruction']
     print("The instruction is :", instruction)
-    answers["instruction"] = instruction
+    # answers["instruction"] = instruction
     chain = model_selector_prompt | structured_ollama_llm_pc1
     response = chain.invoke({"input_instruction": instruction})
     # json_response = response.model_dump_json(indent=2, by_alias=True)
     response_python_dict = response.model_dump()
-    answers["model_names"] = response_python_dict["model_names"]
-    print("response of tool 1 : ", type(response), response)
+    # answers["model_names"] = response_python_dict["model_names"]
+    print("response of tool 1 : ", type(response.model_names), response)
+    print(type(response.model_names[0]),response.model_names[0])
     # framenet_answers.append(json_response)
-    return response_python_dict
-
+    # return response_python_dict
+    return {"action_names" : response.model_names}
 
 class Populater(BaseModel):
     instruction : str = Field()
     model_names : List[str] = Field()
 
-@tool(description="PyCram Action Designator model populator tool that populates Pydantic models",
-      return_direct=True, args_schema=Populater)
-def model_populator(instruction : str , model_names : List[str]) -> dict :
+# @tool(description="PyCram Action Designator model populator tool that populates Pydantic models",
+#       return_direct=True, args_schema=Populater)
+# def model_populator(instruction : str , model_names : List[str]) -> dict :
+def model_populator(state : PyCramStateInternal) -> dict:
     """
     PyCram Action Designator model populator tool that populates Pydantic models
 
@@ -204,14 +212,22 @@ def model_populator(instruction : str , model_names : List[str]) -> dict :
     :return: dictionary
     """
     print("INSIDE MODEL POPULATOR TOOL")
+    instruction = state['instruction']
+    action_names = state['action_names']
+
     instruction_for_populator = {
         "instruction": instruction,
-        "selected_models": model_names
+        "selected_models": action_names
     }
     chain = model_populator_prompt | structured_ollama_llm_pc2
     response = chain.invoke(instruction_for_populator)
+    print("response of tool 2 : ", type(response), response)
+    # if len(response.models) > 0 :
+    #     pyc = response.models[0]
+    print(response.model_dump_json(indent=2, by_alias=True))
     # return {"populated_models" : response.models}
-    return response.model_dump()
+    # return response.model_dump()
+    return {'action_models' : [response.model_dump_json(indent=2, by_alias=True)]}
 
 # model_selector_tool_direct_return = Tool.from_function(
 #     func=model_selector,
@@ -404,48 +420,38 @@ sys_prompt_content_short = """
 pycram_agent_sys_prompt = SystemMessage(content=sys_prompt_content)
 
 # Create the agent
-pycram_agent = create_agent(ollama_llm, [model_selector, model_populator],
-                            agent_sys_prompt=pycram_agent_sys_prompt)
+# pycram_agent_graph = create_agent(ollama_llm, [model_selector, model_populator],
+#                             agent_sys_prompt=pycram_agent_sys_prompt, agent_state_schema=PyCramStateInternal)
 
-# Agent as Node
-def pycram_node(state: MessagesState) -> Command[Literal["supervisor"]]:
-    # messages = [
-    #                {"role": "system", "content": framenet_system_prompt},
-    #            ] + state["messages"]
-    result = pycram_agent.invoke(state)
-    return Command(
-        update={
-            "messages": [
-                HumanMessage(content=result["messages"][-1].content, name="pycram")
-            ]
-        },
-        goto="supervisor",
-    )
 
-# Agent as Node
-def pycram_node_pal(state: MessagesState):
-    # messages = [
-    #                {"role": "system", "content": framenet_system_prompt},
-    #            ] + state["messages"]
-    result = pycram_agent.invoke(state)
-    # print("Pycram agent results: ", type(result),result)
-    return {
-            "messages": result["messages"][-1]
-        }
+pbuilder = StateGraph(PyCramStateInternal)
+pbuilder.add_node("model_selector", model_selector)
+pbuilder.add_node("model_populator", model_populator)
 
-# Agent as Node
-def pycram_node_pal_own(state: MessagesState):
-    # messages = [
-    #                {"role": "system", "content": framenet_system_prompt},
-    #            ] + state["messages"]
-    result = pycram_agent.invoke(state)
-    # print("Pycram agent results: ", type(result),result)
-    return {
-            "messages": result["messages"][-1]
-        }
+pbuilder.add_edge(START, "model_selector")
+pbuilder.add_edge("model_selector", "model_populator")
+pbuilder.add_edge("model_populator", END)
+
+pycram_agent_graph = pbuilder.compile()
+
+
+
+
+def pycram_agent_node(state : StateModel):
+
+    instruction = state['instruction']
+
+    final_internal_state = pycram_agent_graph.invoke({'instruction' : instruction})
+
+    action_names = final_internal_state['action_names']
+    action_models = final_internal_state['action_models']
+
+    print(f"FROM PYCRAM NODE : Action Names : {action_names} and Action Models : {action_models}")
+    return {}
 
 if __name__ == '__main__':
-    print(Arms.LEFT)
+    print()
+    # print(Arms.LEFT)
     # print(model_descriptions)
 
     # responsed = pycram_agent.invoke({"messages" : [HumanMessage(content="generate pycram base models for the instruction pick up the mug from the table")]})
@@ -454,4 +460,4 @@ if __name__ == '__main__':
     # chain = model_populator_prompt | structured_ollama_llm_pc2
     #
     # print(chain)
-    model_populator.invoke("pick up the cup from the table")
+    # model_populator.invoke("pick up the cup from the table")

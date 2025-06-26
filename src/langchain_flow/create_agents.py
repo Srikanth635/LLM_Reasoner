@@ -7,7 +7,6 @@ from langgraph.graph.message import add_messages
 from langgraph.graph import StateGraph, END, MessagesState
 from langgraph.prebuilt import ToolNode, tools_condition
 from langgraph.checkpoint.memory import MemorySaver
-
 from src.langchain_flow.llm_configuration import *
 from pydantic import Field
 
@@ -52,7 +51,7 @@ def route_tools(state: dict):
         return "tools"
     return END
 
-def create_agent(llm, tools, agent_sys_prompt="", agent_state_schema: type = AgentState):
+def create_agent(llm, tools, agent_sys_prompt="", agent_state_schema: type = MessagesState):
     print("Sub Agent Creation")
     # llm_ollama = ollama_llm.bind_tools(tools)
     llm_with_tools = llm.bind_tools(tools)

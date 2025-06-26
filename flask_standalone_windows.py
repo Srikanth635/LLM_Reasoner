@@ -5,6 +5,7 @@ from src.resources.integration.fparser_python import *
 from src.flasking.sending_windows import *
 from src.langchain_flow.agents.models_agent import *
 from src.langchain_flow.agents.segmenter_agent import *
+from src.langchain_flow.agents.pycram_agent import pycram_agent_graph
 
 graph_output = []
 summary = ""
@@ -173,11 +174,15 @@ def generate_test_data_for_window2():
 
 def generate_test_data_for_window3():
     # final_parse_filtered = [final_parse[0], final_parse[1], final_parse[2]]
-    for fp in final_parse:
+    for fp in final_parse[:1]:
         # instruction = fp['instruction']
         # ad = fp['action_designator']
         print("Invoking Model")
         out = enhanced_ad_graph.invoke({'instruction': fp, 'context': ""})
+        pyout = pycram_agent_graph.invoke({'instruction': fp})
+        action_names = pyout['action_names']
+        action_models = pyout['action_models']
+        print(f"FROM PYCRAM NODE : Action Names : {action_names} and Action Models : {action_models}")
         global graph_output
         graph_output.append(out)
 
