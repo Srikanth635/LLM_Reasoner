@@ -27,10 +27,16 @@ def generate_designator():
         _config = {"configurable": {"thread_id": 1}}
         final_graph_state = enhanced_ad_graph.invoke({"instruction": _instruction}, config=_config, stream_mode="updates")
 
+        print(f"Final graph state: {final_graph_state}")
+
         instruction = _instruction
         action_core = enhanced_ad_graph.get_state(_config).values["action_core"]
         enriched_action_core_attributes = enhanced_ad_graph.get_state(_config).values["enriched_action_core_attributes"]
         cram_plan_response = enhanced_ad_graph.get_state(_config).values["cram_plan_response"]
+        # instruction = _instruction
+        # action_core = enhanced_ad_graph.get_state(_config).values["action_core"]
+        # enriched_action_core_attributes = enhanced_ad_graph.get_state(_config).values["enriched_action_core_attributes"]
+        # cram_plan_response = enhanced_ad_graph.get_state(_config).values["cram_plan"]
 
         new_out = {}
         try:
@@ -163,4 +169,4 @@ def reasoner():
 
 
 if __name__ == '__main__':
-    app.run(debug=True, host="0.0.0.0", port=8081)
+    app.run(debug=True, host="localhost", port=8081)

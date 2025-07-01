@@ -805,7 +805,7 @@ ad_builder.add_edge(START, "action_node")
 ad_builder.add_edge("action_node","cram_node")
 ad_builder.add_edge("cram_node",END)
 
-enhanced_ad_graph = ad_builder.compile()
+enhanced_ad_graph = ad_builder.compile(checkpointer=enhanced_ad_memory)
 
 
 def enhanced_ad_agent_node(state : StateModel):
