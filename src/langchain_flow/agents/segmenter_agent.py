@@ -42,6 +42,11 @@ class StructuredActivity(BaseModel):
 class OrderedInstructions(BaseModel):
     instructions: List[str] = Field(description="List of Robot Actionable instructions in natural language imperative form.")
 
+counter = 0
+
+class Reflection(BaseModel):
+    reflections : List[str] = Field(description="List of feedbacks/recommendations/reasons sentences")
+    # need_correction : bool = Field(default=False, description="corrections to the instructions are needed or not.")
 
 TaskObjectiveAgent_prompt_template = """
     You are an intelligent task reasoning assistant.
@@ -241,11 +246,23 @@ InstructionRefinementAgent_prompt_template = """
     2.  **Check for Logical Flow**: Ensure the overall plan makes sense. For instance, an object should be opened before its contents are poured. Do not reorder steps unless there is a clear logical contradiction.
     3.  **Improve Clarity and Conciseness**: Rephrase any awkward or ambiguous commands. Ensure every command uses an action verb from the approved list: `[peel, cut, pick up, lift, open, operate tap, pipette, pour, press, pull, place, remove, roll, shake, spoon, sprinkle, stir, take, turn, unscrew, wait]`
     
+    NOTE: Additionally, you might be given an optional feedback/reason/recommendation on your refinement instructions. If given consider them and alter the
+    instructions accordingly only if needed.
+    
     ### EXPECTED OUTPUT: ###
     ** Return only the final, corrected instruction list — one instruction per line in execution order.
     Do not add commentary, explanation, formatting, or feedback. **
+"""
+
+ReflectionAgent_prompt_template = """
+    You are a meticulous quality review assistant for robot task plans.
     
-    /nothink
+    You're are provided with the overall objective and the sequence of atomic robot instructions to accomplish that.
+    
+    Perform logical checks on the sequence of robot action instructions. Provide critical feedback and recommendations about
+    any error prone instructions or absurd order of action instructions or if there's any redundancy or repetition of instructions.
+    
+    Give out all the reasons/feedbacks/recommendations as a list of statements.
 """
 
 InstructionRefinementAgent_prompt_template_old = """
@@ -302,20 +319,24 @@ def llm_deduplicate_activities(activities):
 
 # Graph state structure
 class SystemState(TypedDict):
+    counter: int
     segments: List[str]
     task_objective: Optional[str]
     structured_activities: List[Union[str, Dict]]
     filtered_activities: List[Union[str, Dict]]
     final_instructions: List[str]
+    reflections : List[str]
 
 
 def initial_state(segments: List[str]) -> SystemState:
     return {
+        "counter": 0,
         "segments": segments,
         "task_objective": None,
         "structured_activities": [],
         "filtered_activities": [],
-        "final_instructions": []
+        "final_instructions": [],
+        "reflections":[]
     }
 
 # Define Nodes
@@ -383,7 +404,12 @@ def instruction_refinement_agent(state: SystemState):
     raw_instructions = state["final_instructions"]
     joined = "\n".join(raw_instructions)
 
-    prompt = InstructionRefinementAgent_prompt_template.strip() + "\n\nInstructions:\n" + joined
+    joined_reflections = ""
+    feedback = state['reflections']
+    if feedback:
+        joined_reflections = "\n".join(feedback)
+
+    prompt = InstructionRefinementAgent_prompt_template.strip() + "\n\nInstructions:\n" + joined + "\n\nFeedback:\n" + joined_reflections
     ollama_llm_structured = ollama_llm.with_structured_output(OrderedInstructions, method="json_schema")
     result = ollama_llm_structured.invoke(prompt)
     # result_cleaned = think_remover(result.content)
@@ -394,9 +420,24 @@ def instruction_refinement_agent(state: SystemState):
     # ]
     state["final_instructions"] = result.model_dump()["instructions"]
     print("Refined Instructions: ", state["final_instructions"])
+    state['counter'] = state['counter'] + 1
     # state["final_instructions"] = refined_lines
     # print("Refined Instructions:\n", "\n".join(refined_lines))
     return state
+
+def reflection_agent(state : SystemState):
+    objective = state["task_objective"]
+    refined_instructions = state["final_instructions"]
+    joined = "\n".join(refined_instructions)
+
+    prompt = ReflectionAgent_prompt_template.strip() + "\nOverall Task Objective:"+objective  + "\n\nInstructions:\n" + joined
+    ollama_llm_structured = ollama_llm.with_structured_output(Reflection, method="json_schema")
+    result = ollama_llm_structured.invoke(prompt)
+    state['counter'] = state['counter'] + 1
+    state['reflections'] = result.reflections
+    print("Reflections: ", state["reflections"])
+    return state
+
 
 # LangGraph DAG construction
 graph = StateGraph(SystemState)
@@ -407,6 +448,7 @@ graph.add_node("ActivityExtractionAgent", activity_extraction_agent)
 # graph.add_node("InstructionGeneratorAgent", instruction_generator_agent)
 graph.add_node("InstructionPlannerAgent", instruction_planner)
 graph.add_node("InstructionRefinementAgent", instruction_refinement_agent)
+graph.add_node("ReflectionAgent", reflection_agent)
 
 
 graph.set_entry_point("TaskObjectiveAgent")
@@ -415,7 +457,17 @@ graph.add_edge("TaskObjectiveAgent", "ActivityExtractionAgent")
 # graph.add_edge("RedundancyFilterAgent", "InstructionGeneratorAgent")
 graph.add_edge("ActivityExtractionAgent", "InstructionPlannerAgent")
 graph.add_edge("InstructionPlannerAgent", "InstructionRefinementAgent")
-graph.add_edge("InstructionRefinementAgent", END)
+
+def should_continue(state : SystemState):
+    counter = state["counter"]
+    if counter > 3:
+        # End after 5 iterations
+        counter += 1
+        return END
+    return "ReflectionAgent"
+
+graph.add_conditional_edges("InstructionRefinementAgent", should_continue)
+graph.add_edge("ReflectionAgent", "InstructionRefinementAgent")
 
 # Compile
 workflow = graph.compile()
