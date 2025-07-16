@@ -832,8 +832,13 @@ if __name__ == "__main__":
     # print(ad_graph.invoke({"instruction": "pour 2 ounces of honey from the blue bottle onto the round white plate"}))
     #
     # print(ad_graph.invoke({"instruction": "cut the apple into 2 slices using black knife"}))
-
-    print(enhanced_ad_graph.invoke({"instruction": "pick up the cooking pan from the wooden drawer"}))
+    config = {'configurable': {'thread_id': 1}}
+    result = enhanced_ad_graph.invoke({"instruction": "pick up the cooking pan from the wooden drawer"}, config=config)
+    state = enhanced_ad_graph.get_state(config=config)
+    print('*'*10)
+    state_dix = state.values
+    for key,value in state_dix.items():
+        print(key, ":", value)
 
     # print(json_path)
     # print(json_data['Pouring'])

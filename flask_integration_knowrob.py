@@ -169,4 +169,4 @@ def reasoner():
 
 
 if __name__ == '__main__':
-    app.run(debug=True, host="localhost", port=8081)
+    app.run(debug=False, host="localhost", port=8081)
